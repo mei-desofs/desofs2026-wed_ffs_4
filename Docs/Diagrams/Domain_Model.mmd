@@ -1,0 +1,71 @@
+classDiagram
+    direction TB
+
+    class User {
+        +UUID id
+        +String email
+        +String passwordHash
+        +Role role
+    }
+
+    class Role {
+        <<enumeration>>
+        ADMIN
+        MANAGER
+        MEMBER
+    }
+
+    class Project {
+        +UUID id
+        +String title
+        +String description
+    }
+
+    class ProjectMember {
+        +UUID userId
+        +UUID projectId
+    }
+
+    class Task {
+        +UUID id
+        +UUID projectId
+        +String title
+        +String description
+        +TaskStatus status
+        +UUID assigneeId
+        +UUID createdBy
+    }
+
+    class TaskStatus {
+        <<enumeration>>
+        TODO
+        IN_PROGRESS
+        DONE
+    }
+
+    class Attachment {
+        +UUID id
+        +UUID taskId
+        +String fileName
+        +String userFileName
+        +UUID uploadedBy
+    }
+
+    class Comment {
+        +UUID id
+        +UUID taskId
+        +UUID authorId
+        +String body
+        +DateTime createdAt
+    }
+
+    User "1" --> "1" Role : has
+    User "1" --> "0..*" ProjectMember : participates via
+    Project "1" --> "0..*" ProjectMember : has
+    Project "1" --> "0..*" Task : contains
+    Task "1" --> "1" TaskStatus : has
+    Task "1" --> "0..*" Attachment : has
+    Task "1" --> "0..*" Comment : has
+    User "1" --> "0..*" Task : assignedTo
+    User "1" --> "0..*" Attachment : uploads
+    User "1" --> "0..*" Comment : writes
