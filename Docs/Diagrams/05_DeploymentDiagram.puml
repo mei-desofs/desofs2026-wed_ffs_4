@@ -1,0 +1,17 @@
+@startuml Teuxdeux_Deployment
+node "Client" as C1
+node "Load Balancer" as LB1
+node "API Servers" as API1
+node "Cache" as Cache1
+node "Database" as DB1
+node "Storage" as FS1
+node "Backup" as BK1
+
+C1 --> LB1: HTTPS
+LB1 --> API1: Route
+API1 --> Cache1: Session
+API1 --> DB1: Query
+API1 --> FS1: File I/O
+DB1 --> BK1: Snapshot
+@enduml
+

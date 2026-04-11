@@ -1,0 +1,35 @@
+@startuml Teuxdeux_UseCase
+left to right direction
+
+actor Admin as AD
+actor Manager as MGR
+actor Member as MEM
+
+rectangle "API" {
+  usecase "Login" as UC1
+  usecase "Projects" as UC2
+  usecase "Tasks" as UC3
+  usecase "Comments" as UC4
+  usecase "Files" as UC5
+  usecase "Users" as UC6
+}
+
+AD --> UC1
+AD --> UC2
+AD --> UC3
+AD --> UC4
+AD --> UC5
+AD --> UC6
+
+MGR --> UC1
+MGR --> UC2
+MGR --> UC3
+MGR --> UC4
+MGR --> UC5
+
+MEM --> UC1
+MEM --> UC3
+MEM --> UC4
+MEM --> UC5
+
+@enduml

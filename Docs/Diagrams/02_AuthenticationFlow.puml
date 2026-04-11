@@ -1,0 +1,49 @@
+@startuml 02_AuthenticationFlow
+participant User
+participant "API Controller" as Controller
+participant "AuthService" as Auth
+participant "Database" as DB
+
+User -> Controller: POST /auth/login\n{username, password}
+activate Controller
+
+Controller -> Auth: validateCredentials(username, password)
+activate Auth
+
+Auth -> DB: SELECT user WHERE username=?
+activate DB
+DB --> Auth: user record
+deactivate DB
+
+Auth -> Auth: bcrypt.compare(password, hash)
+note right: Compare provided password\nwith stored hash
+
+Auth --> Controller: {token, userId, role}
+deactivate Auth
+
+Controller --> User: 200 OK\n{token, expiresIn: 86400}
+deactivate Controller
+
+note over User: Client stores JWT token\nin Authorization header
+
+User -> Controller: GET /projects\nAuthorization: Bearer <token>
+activate Controller
+
+Controller -> Controller: validateToken(token)
+note right: Extract, verify signature,\ncheck expiration
+
+Controller -> Auth: getUserRole(userId)\nfrom token.sub
+activate Auth
+Auth -> DB: SELECT role FROM users\nWHERE id=?
+DB --> Auth: role
+deactivate Auth
+Auth --> Controller: role
+deactivate Auth
+
+Controller -> Controller: checkPermission(role, endpoint)
+note right: Always re-fetch role from DB,\nnever trust token
+
+Controller --> User: 200 OK {data}
+deactivate Controller
+
+@enduml

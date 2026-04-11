@@ -1,0 +1,18 @@
+@startuml RBAC
+
+rectangle "ADMIN" {
+  rectangle "Full System Access" {
+  }
+}
+
+rectangle "MANAGER" {
+  rectangle "Project Level" {
+  }
+}
+
+rectangle "MEMBER" {
+  rectangle "Task Assignment" {
+  }
+}
+
+@enduml

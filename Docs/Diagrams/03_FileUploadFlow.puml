@@ -1,0 +1,67 @@
+@startuml 03_FileUploadFlow
+participant User
+participant "API Controller" as Controller
+participant "FileService" as FileService
+participant "Database" as DB
+participant "Filesystem" as FS
+
+User -> Controller: POST /tasks/{id}/attachments\nAuthorization: Bearer <token>\nFile: document.pdf (5MB)
+activate Controller
+
+Controller -> Controller: validateToken()
+Controller -> DB: verifyUserRole(userId)
+DB --> Controller: role=Member
+
+Controller -> DB: SELECT project_id FROM tasks\nWHERE id=?
+DB --> Controller: project_id=123
+
+Controller -> DB: SELECT * FROM project_members\nWHERE project_id=123 AND user_id=?\nAND deleted_at IS NULL
+note right: Verify user is team member,\naccess to this project
+DB --> Controller: member record exists
+
+Controller -> FileService: uploadFile(file, taskId, userId)
+activate FileService
+
+FileService -> FileService: validateFileType(document.pdf)
+note right: Check whitelist:\npdf, doc, xlsx, etc.
+
+FileService -> FileService: validateFileSize(5MB)
+note right: Max 25MB per file
+
+FileService -> FileService: generateUUID() + timestamp
+note right: Create unique filename:\nuuid_timestamp.pdf
+
+FileService -> FS: write to\n/projects/123/tasks/{id}/\nattachments/{uuid}_{ts}.pdf
+activate FS
+FS --> FileService: success
+deactivate FS
+
+FileService -> DB: INSERT INTO attachments\n(task_id, uploaded_by, filename,\noriginal_name, size, mimetype, path,\ncreated_at)
+DB --> FileService: attachment_id=456
+
+FileService -> DB: INSERT INTO audit_logs\n(action='FILE_UPLOAD', user_id,\nresource_id, created_at)
+DB --> FileService: audit recorded
+
+FileService --> Controller: {attachmentId: 456, url}
+deactivate FileService
+
+Controller --> User: 200 OK\n{attachmentId, downloadUrl}
+deactivate Controller
+
+note over Controller, FS: File access controlled by DB check:\nonly project members can download
+
+User -> Controller: GET /attachments/{attachmentId}
+activate Controller
+Controller -> DB: SELECT a.*, p.id as project_id\nFROM attachments a\nJOIN tasks t ON a.task_id=t.id\nJOIN projects p ON t.project_id=p.id\nWHERE a.id={attachmentId}
+DB --> Controller: attachment + project_id
+
+Controller -> DB: verifyUserInProject(userId, project_id)
+note right: Check user is team member\nbefore allowing download
+DB --> Controller: verified
+
+Controller -> FS: read file from path
+FS --> Controller: file stream
+Controller --> User: 200 OK + file download
+deactivate Controller
+
+@enduml

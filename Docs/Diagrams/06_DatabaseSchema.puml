@@ -1,0 +1,137 @@
+@startuml 06_DatabaseSchema
+!define ABSTRACT abstract
+skinparam linetype ortho
+skinparam classBackgroundColor #FEFECE
+skinparam classBorderColor #A80036
+
+entity "users" as users {
+  * id : INT [PK]
+  --
+  * username : VARCHAR(50) [UNIQUE]
+  * password_hash : VARCHAR(255)
+  * role : ENUM(ADMIN, MANAGER, MEMBER)
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+  * deleted_at : TIMESTAMP [NULL]
+  * deleted_by : INT [FK, NULL]
+}
+
+entity "projects" as projects {
+  * id : INT [PK]
+  * title : VARCHAR(255)
+  * description : TEXT
+  --
+  * created_by : INT [FK→users]
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+  * deleted_at : TIMESTAMP [NULL]
+  * deleted_by : INT [FK→users, NULL]
+}
+
+entity "project_members" as members {
+  * id : INT [PK]
+  * project_id : INT [FK→projects]
+  * user_id : INT [FK→users]
+  --
+  * role_in_project : ENUM(MANAGER, MEMBER)
+  * joined_at : TIMESTAMP
+}
+
+entity "tasks" as tasks {
+  * id : INT [PK]
+  * project_id : INT [FK→projects]
+  * title : VARCHAR(255)
+  * description : TEXT
+  --
+  * assigned_to : INT [FK→users, NULL]
+  * status : ENUM(TODO, IN_PROGRESS, DONE)
+  * priority : ENUM(LOW, MEDIUM, HIGH)
+  * created_by : INT [FK→users]
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+  * deleted_at : TIMESTAMP [NULL]
+  * deleted_by : INT [FK→users, NULL]
+}
+
+entity "comments" as comments {
+  * id : INT [PK]
+  * task_id : INT [FK→tasks]
+  * parent_id : INT [FK→comments, NULL]
+  --
+  * content : TEXT
+  * author_id : INT [FK→users]
+  * created_at : TIMESTAMP
+  * updated_at : TIMESTAMP
+  * deleted_at : TIMESTAMP [NULL]
+  * deleted_by : INT [FK→users, NULL]
+}
+
+entity "attachments" as attachments {
+  * id : INT [PK]
+  * task_id : INT [FK→tasks]
+  * original_filename : VARCHAR(255)
+  * stored_filename : VARCHAR(36)
+  --
+  * file_size : INT
+  * mime_type : VARCHAR(50)
+  * uploaded_by : INT [FK→users]
+  * uploaded_at : TIMESTAMP
+  * deleted_at : TIMESTAMP [NULL]
+  * deleted_by : INT [FK→users, NULL]
+}
+
+entity "audit_logs" as audit_logs {
+  * id : INT [PK]
+  * user_id : INT [FK→users]
+  * operation : VARCHAR(20)
+  --
+  * entity_type : VARCHAR(50)
+  * entity_id : INT
+  * old_values : JSON [NULL]
+  * new_values : JSON [NULL]
+  * ip_address : VARCHAR(45)
+  * user_agent : VARCHAR(500)
+  * created_at : TIMESTAMP
+}
+
+users ||--o{ projects : "creates"
+users ||--o{ project_members : "members_of"
+users ||--o{ tasks : "creates"
+users ||--o{ tasks : "assigned_to"
+users ||--o{ comments : "authors"
+users ||--o{ attachments : "uploads"
+users ||--o{ audit_logs : "performs"
+
+projects ||--o{ project_members : "has"
+projects ||--o{ tasks : "contains"
+
+tasks ||--o{ comments : "has"
+tasks ||--o{ attachments : "has"
+
+comments ||--o{ comments : "nested_replies"
+
+note bottom of users
+  Role: ADMIN (system-wide)
+           MANAGER (project creator)
+           MEMBER (project member)
+end note
+
+note bottom of projects
+  Soft-delete: deleted_at tracks deletion
+  Project isolation enforced via
+  project_members join table
+end note
+
+note bottom of tasks
+  Soft-delete: deleted_at tracks deletion
+  Status workflow: TODO → IN_PROGRESS → DONE
+  Project-level access control required
+end note
+
+note bottom of audit_logs
+  Comprehensive audit trail
+  Tracks all CREATE/UPDATE/DELETE
+  operations with IP address
+end note
+
+@enduml
