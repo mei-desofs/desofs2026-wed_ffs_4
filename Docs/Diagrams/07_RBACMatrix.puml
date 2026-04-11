@@ -1,18 +1,46 @@
-@startuml RBAC
+@startuml 07_RBACMatrix
+skinparam linetype ortho
+skinparam packageStyle rectangle
 
-rectangle "ADMIN" {
-  rectangle "Full System Access" {
-  }
+package "ADMIN" {
+  rectangle "Users\n- Create/Delete users\n- Assign system roles" as A1
+  rectangle "Projects & Tasks\n- Full CRUD across all projects\n- Full file access" as A2
+  rectangle "Audit\n- View all audit logs" as A3
 }
 
-rectangle "MANAGER" {
-  rectangle "Project Level" {
-  }
+package "MANAGER" {
+  rectangle "Own Projects\n- Create/Edit/Delete own projects\n- Manage project members" as M1
+  rectangle "Tasks\n- Create/assign/update tasks\ninside own projects" as M2
+  rectangle "Project Data\n- Upload/Download files\n- View project audit" as M3
 }
 
-rectangle "MEMBER" {
-  rectangle "Task Assignment" {
-  }
+package "MEMBER" {
+  rectangle "Assigned Work\n- View assigned projects/tasks\n- Update own task status" as U1
+  rectangle "Collaboration\n- Add/reply comments\n- Edit own comments\n- Upload/download allowed files" as U2
+  rectangle "Restrictions\n- Cannot create projects\n- Cannot manage members\n- Cannot assign tasks to others" as U3
 }
+
+package "Authorization Enforcement" {
+  rectangle "Layer 1: Route-level RBAC\n@Authorize + endpoint role check" as E1
+  rectangle "Layer 2: Resource ownership\ncreator/assignee/manager/admin validation" as E2
+  rectangle "Layer 3: Data filters\nproject membership + deleted_at IS NULL" as E3
+}
+
+A1 --> E1
+A2 --> E2
+A3 --> E3
+
+M1 --> E1
+M2 --> E2
+M3 --> E3
+
+U1 --> E2
+U2 --> E3
+U3 --> E1
+
+note right of E2
+  Never trust token role alone.
+  Re-validate role and membership from DB.
+end note
 
 @enduml
