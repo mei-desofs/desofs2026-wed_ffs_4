@@ -62,6 +62,7 @@
 - SR-10: Sensitive data never logged (passwords, tokens). Credentials never appear in logs.
 - SR-11: File access control via authentication/authorization. Files accessible only to authenticated and authorized users.
 - SR-12: Parameterized queries for all DB access. Prevents SQL injection in all queries.
+- SR-13: Cookie-based authentication using HttpOnly, Secure, and SameSite=Strict flags. Prevents CSRF and XSS token theft.
 
 ---
 
