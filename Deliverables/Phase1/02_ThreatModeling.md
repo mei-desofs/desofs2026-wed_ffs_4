@@ -54,7 +54,7 @@
 | T1 | Brute force login | 4 | 5 | 20 | M1: Rate limiting (5 attempts/min, 20/hour/IP, 15min lockout) |
 | T2 | Weak password policy | 3 | 4 | 12 | M2: Min 12 chars, mixed complexity |
 | T3 | JWT token forgery | 2 | 5 | 10 | M3: HS256 signature + expiration validation |
-| T4 | Session hijacking | 3 | 5 | 15 | M4: HTTPS only, HttpOnly cookies, 24h expiry |
+| T4 | Session hijacking | 3 | 5 | 15 | M4: HTTPS only, HttpOnly + Secure + SameSite=Strict cookies, 24h expiry |
 
 ### Authorization Threats
 
@@ -96,6 +96,7 @@
 | T18 | Sensitive data in logs | 3 | 4 | 12 | M18: Log scrubbing, no passwords/tokens |
 | T19 | Audit log tampering | 2 | 4 | 8 | M19: Append-only log, restricted access |
 | T20 | Incomplete audit trail | 3 | 3 | 9 | M20: Log all auth/authz/data operations |
+| T21 | CSRF attack | 3 | 5 | 15 | M4: SameSite=Strict cookie flag |
 
 ---
 
@@ -111,6 +112,7 @@
 - T10 (File bypass): 15 - M10 API endpoint
 - T13 (SQL injection): 20 - M13 parameterized queries
 - T15 (XSS): 16 - M15 output encoding
+- T21 (CSRF): 15 - M4 SameSite=Strict
 
 **High Priority (P1) - Score 12-14:**
 - T2 (Weak password): 12 - M2 complexity rules
@@ -133,7 +135,7 @@
 **P0 Mitigations Required for Phase 1:**
 - M1: Rate limiting implementation
 - M3: JWT signature validation
-- M4: Token expiration + HTTPS requirement
+- M4: Token expiration + HTTPS + SameSite=Strict cookie flags
 - M5: Role re-validation from DB
 - M6: Project membership filters
 - M8: Authorization middleware
@@ -166,4 +168,4 @@
 | M13, M18 | 04_SecurityDesign.md | Input Validation & Logging |
 | M15 | 04_SecurityDesign.md | Output Encoding (XSS Prevention) |
 | All test cases | 06_SecurityTesting.md | Security Test Strategy |
-| All requirements | 01_Requirements.md | Security Requirements (SR-1 to SR-12) |
+| All requirements | 01_Requirements.md | Security Requirements (SR-1 to SR-13) |
