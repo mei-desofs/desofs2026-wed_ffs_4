@@ -20,7 +20,7 @@
 - AuthController (login, logout, refresh)
 - ProjectController (CRUD, members)
 - TaskController (CRUD, status)
-- CommentController (CRUD, nested)
+- CommentController (CRUD)
 - AttachmentController (upload, download)
 
 **Service Layer:**
@@ -44,7 +44,7 @@ projects (id, title, description, created_by, createdAt, updatedAt, deletedAt, d
 project_members (id, project_id, user_id, role_in_project, joined_at)
 tasks (id, project_id, title, description, assigned_to, status, priority, 
        created_by, createdAt, updatedAt, deletedAt, deletedBy)
-comments (id, task_id, parent_id, content, author_id, createdAt, updatedAt, deletedAt, deletedBy)
+comments (id, task_id, content, author_id, createdAt, updatedAt, deletedAt, deletedBy)
 attachments (id, task_id, original_filename, stored_filename, file_size, mime_type,
              uploaded_by, uploadedAt, deletedAt, deletedBy)
 audit_logs (id, user_id, operation, entity_type, entity_id, old_values, new_values, 
@@ -67,7 +67,7 @@ audit_logs (id, user_id, operation, entity_type, entity_id, old_values, new_valu
 ## Indexes
 
 **Performance:**
-- users.username, projects.created_by, tasks.project_id
+- users.username, projects.created_by, tasks.project_id│  Repositories      │ (Data access, parameterized queries)
 - tasks.assigned_to, comments.task_id, attachments.task_id
 
 **Soft-Delete:**
@@ -123,11 +123,3 @@ Authorization: Bearer <JWT_TOKEN>
 3. **Authorization:** RBAC middleware on all endpoints
 4. **Input Validation:** Type checks, whitelist file types
 5. **Data Access:** Parameterized queries, soft-delete enforcement
-
-## Phase 2+ Scalability
-
-- Horizontal: Load balancer, stateless API, Redis for sessions
-- Database: Master-slave replication
-- Storage: NAS or distributed (S3-like)
-- Performance: Caching (Redis), query optimization
-- CDN for static files
