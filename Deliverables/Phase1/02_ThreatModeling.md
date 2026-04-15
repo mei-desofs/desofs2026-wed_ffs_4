@@ -88,6 +88,7 @@
 | T15 | XSS in comments | 4 | 4 | 16 | M15: HTML entity encoding on output |
 | T16 | Unauthorized comment edit | 3 | 4 | 12 | M16: Author/manager only validation |
 | T17 | Soft-delete visibility | 2 | 3 | 6 | M17: Query filters (WHERE deletedAt IS NULL) |
+| T21 | CSRF attack | 3 | 5 | 15 | M21: Bearer token in Authorization header |
 
 ### Logging Threats
 
@@ -111,6 +112,7 @@
 - T10 (File bypass): 15 - M10 API endpoint
 - T13 (SQL injection): 20 - M13 parameterized queries
 - T15 (XSS): 16 - M15 output encoding
+- T21 (CSRF): 15 - M21 Bearer token
 
 **High Priority (P1) - Score 12-14:**
 - T2 (Weak password): 12 - M2 complexity rules
@@ -141,6 +143,7 @@
 - M10: Authenticated file endpoint
 - M13: Parameterized SQL queries
 - M15: Output encoding
+- M21: Bearer token authentication (CSRF prevention)
 
 **P1 Mitigations Required for Phase 1:**
 - M2: Password complexity rules
@@ -166,4 +169,4 @@
 | M13, M18 | 04_SecurityDesign.md | Input Validation & Logging |
 | M15 | 04_SecurityDesign.md | Output Encoding (XSS Prevention) |
 | All test cases | 06_SecurityTesting.md | Security Test Strategy |
-| All requirements | 01_Requirements.md | Security Requirements (SR-1 to SR-12) |
+| All requirements | 01_Requirements.md | Security Requirements (SR-1 to SR-13) |
