@@ -1,17 +1,65 @@
 @startuml Teuxdeux_Deployment
-node "Client" as C1
-node "Load Balancer" as LB1
-node "API Servers" as API1
-node "Cache" as Cache1
-node "Database" as DB1
-node "Storage" as FS1
-node "Backup" as BK1
+skinparam linetype ortho
 
-C1 --> LB1: HTTPS
-LB1 --> API1: Route
-API1 --> Cache1: Session
-API1 --> DB1: Query
-API1 --> FS1: File I/O
-DB1 --> BK1: Snapshot
+node "Client Layer" as CL {
+  component "Web/Mobile Client" as Client
+}
+
+node "API Server" as AS {
+  component "Teuxdeux REST API" as API
+}
+
+node "Data Layer" as DL {
+  database "PostgreSQL DB" as DB
+}
+
+node "Storage" as ST {
+  component "Filesystem" as FS
+}
+
+CL --> AS: HTTPS
+AS --> DL: Parameterized SQL
+AS --> ST: File I/O
+
+note right of CL
+  Client connects via HTTPS
+  JWT token in Authorization header
+end note
+
+note right of AS
+  Stateless REST API
+  6 services + 7 repositories
+  Rate limiting + RBAC enforcement
+end note
+
+note right of DL
+  PostgreSQL 8 tables
+  Soft-delete on all
+  Audit trail
+end note
+
+note right of ST
+  Local filesystem
+  Path: /var/opt/teuxdeux/storage/
+  UUID-based filenames
+end note
+
+@enduml
+  Rate limiting enabled
+  JWT authentication
+end note
+
+note right of DB
+  8 tables with soft-delete
+  Parameterized queries
+  Audit trail
+end note
+
+note right of FS
+  /var/opt/teuxdeux/storage/
+  Project isolation
+  UUID filenames
+end note
+
 @enduml
 

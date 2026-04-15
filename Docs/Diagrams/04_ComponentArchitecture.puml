@@ -1,21 +1,20 @@
 @startuml 04_ComponentArchitecture
-!define AWSPUML https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v14.0/dist
 skinparam linetype ortho
 
 rectangle "Client Layer" {
-  component "Mobile App\nWeb Client" as Client
+  component "Web/Mobile Client" as Client
 }
 
-rectangle "API Server (Stateless)" {
-  rectangle "Presentation Layer" {
+rectangle "API Layer (Stateless)" {
+  rectangle "Controllers" {
     component "AuthController" as C1
     component "ProjectController" as C2
     component "TaskController" as C3
     component "CommentController" as C4
     component "AttachmentController" as C5
   }
-  
-  rectangle "Business Logic Layer" {
+
+  rectangle "Services" {
     component "AuthService" as S1
     component "ProjectService" as S2
     component "TaskService" as S3
@@ -23,8 +22,8 @@ rectangle "API Server (Stateless)" {
     component "FileService" as S5
     component "AuditService" as S6
   }
-  
-  rectangle "Data Access Layer" {
+
+  rectangle "Repositories" {
     component "UserRepository" as R1
     component "ProjectRepository" as R2
     component "TaskRepository" as R3
@@ -35,11 +34,11 @@ rectangle "API Server (Stateless)" {
 }
 
 rectangle "Data Layer" {
-  database "PostgreSQL\n8 Tables\nSoft-Delete" as DB
+  database "PostgreSQL" as DB
 }
 
 rectangle "Storage Layer" {
-  component "Filesystem\n/projects/{id}/tasks/\n{id}/attachments/" as FS
+  component "Filesystem" as FS
 }
 
 Client --> C1
@@ -47,6 +46,30 @@ Client --> C2
 Client --> C3
 Client --> C4
 Client --> C5
+
+C1 --> S1
+C2 --> S2
+C3 --> S3
+C4 --> S4
+C5 --> S5
+
+S1 --> R1
+S2 --> R2
+S3 --> R3
+S4 --> R4
+S5 --> R5
+S6 --> R6
+
+R1 --> DB
+R2 --> DB
+R3 --> DB
+R4 --> DB
+R5 --> DB
+R6 --> DB
+
+S5 --> FS
+
+@enduml
 
 C1 --> S1
 C2 --> S2

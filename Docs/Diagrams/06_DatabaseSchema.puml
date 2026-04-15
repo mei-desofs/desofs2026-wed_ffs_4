@@ -1,5 +1,4 @@
 @startuml 06_DatabaseSchema
-!define ABSTRACT abstract
 skinparam linetype ortho
 skinparam classBackgroundColor #FEFECE
 skinparam classBorderColor #A80036
@@ -94,21 +93,21 @@ entity "audit_logs" as audit_logs {
   * created_at : TIMESTAMP
 }
 
-users ||--o{ projects : "creates"
-users ||--o{ project_members : "members_of"
-users ||--o{ tasks : "creates"
-users ||--o{ tasks : "assigned_to"
-users ||--o{ comments : "authors"
-users ||--o{ attachments : "uploads"
-users ||--o{ audit_logs : "performs"
+users ||--o{ projects : creates
+users ||--o{ members : membership
+users ||--o{ tasks : creates
+users ||--o{ tasks : assigned_to
+users ||--o{ comments : authors
+users ||--o{ attachments : uploads
+users ||--o{ audit_logs : performs
 
-projects ||--o{ project_members : "has"
-projects ||--o{ tasks : "contains"
+projects ||--o{ members : has
+projects ||--o{ tasks : contains
 
-tasks ||--o{ comments : "has"
-tasks ||--o{ attachments : "has"
+tasks ||--o{ comments : has
+tasks ||--o{ attachments : has
 
-comments ||--o{ comments : "nested_replies"
+comments ||--o{ comments : nested_replies
 
 note bottom of users
   Role: ADMIN (system-wide)

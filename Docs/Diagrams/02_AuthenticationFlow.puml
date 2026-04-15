@@ -1,49 +1,44 @@
 @startuml 02_AuthenticationFlow
 participant User
-participant "API Controller" as Controller
-participant "AuthService" as Auth
-participant "Database" as DB
+participant Controller
+participant AuthService
+participant Database
 
-User -> Controller: POST /auth/login\n{username, password}
+User -> Controller: POST /auth/login
 activate Controller
+Controller -> AuthService: validateCredentials(username, password)
+activate AuthService
 
-Controller -> Auth: validateCredentials(username, password)
-activate Auth
+AuthService -> Database: SELECT user WHERE username=?
+activate Database
+Database --> AuthService: user record
+deactivate Database
 
-Auth -> DB: SELECT user WHERE username=?
-activate DB
-DB --> Auth: user record
-deactivate DB
+AuthService -> AuthService: bcrypt.compare(password, hash)
+note right: Verify password hash
 
-Auth -> Auth: bcrypt.compare(password, hash)
-note right: Compare provided password\nwith stored hash
+AuthService --> Controller: JWT token
+deactivate AuthService
 
-Auth --> Controller: {token, userId, role}
-deactivate Auth
-
-Controller --> User: 200 OK\n{token, expiresIn: 86400}
+Controller --> User: 200 OK with token
 deactivate Controller
 
-note over User: Client stores JWT token\nin Authorization header
+note over User: Client stores JWT in Authorization header
 
-User -> Controller: GET /projects\nAuthorization: Bearer <token>
+User -> Controller: GET /projects
 activate Controller
+note right: Authorization: Bearer <token>
 
-Controller -> Controller: validateToken(token)
-note right: Extract, verify signature,\ncheck expiration
+Controller -> Controller: validateToken()
+note right: Verify signature and expiration
 
-Controller -> Auth: getUserRole(userId)\nfrom token.sub
-activate Auth
-Auth -> DB: SELECT role FROM users\nWHERE id=?
-DB --> Auth: role
-deactivate Auth
-Auth --> Controller: role
-deactivate Auth
+Controller -> Database: SELECT role FROM users WHERE id=?
+activate Database
+Database --> Controller: role from DB
+deactivate Database
+note right: Always re-fetch role from DB
 
-Controller -> Controller: checkPermission(role, endpoint)
-note right: Always re-fetch role from DB,\nnever trust token
-
-Controller --> User: 200 OK {data}
+Controller --> User: 200 OK with data
 deactivate Controller
 
 @enduml
