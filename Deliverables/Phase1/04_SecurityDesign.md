@@ -147,7 +147,7 @@ Index on: created_at, user_id, entity_type
 | SQL injection | Parameterized queries | All DB queries use prepared statements |
 | Path traversal | Filename validation | UUID storage + sanitization |
 | Sensitive in logs | Log scrubbing | Never log passwords, tokens, PII |
-
+| CSRF | Bearer token in Authorization header | Immune by design |
 ---
 
 ## 1. Authentication
