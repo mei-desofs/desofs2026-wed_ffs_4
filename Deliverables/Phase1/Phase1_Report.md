@@ -46,18 +46,18 @@ Teuxdeux is a collaborative task management platform built for teams, enabling t
 | As a visitor, I want to register with an email and password so that I can access the platform.                           | —                                  |
 | As a registered user, I want to log in with my email and password.                                                       | All                                |
 | As an authenticated user, I want to log out and have my session invalidated.                                             | All                                |
-| As an Admin, I want to create a new project with a title and description.                                                | Admin, Manager                     |
-| As an Admin, I want to delete a project.                                                                                 | Admin, Manager (own projects only) |
+| As an Admin, I want to create a new project with a title and description.                                                | Admin                              |
+| As an Admin, I want to delete a project.                                                                                 | Admin                              |
 | As an Admin or Manager, I want to edit a project's title and description.                                                | Admin, Manager (own projects only) |
 | As an Admin, I want to add users to a project and assign them the Member role.                                           | Admin, Manager (own projects only) |
 | As any project member, I want to view the projects I belong to or have created.                                          | All                                |
 | As an Admin or Manager, I want to create a task within a project, setting its title, description, and assignee.          | Admin, Manager (own projects only) |
 | As an Admin or Manager, I want to edit all task fields (title, description, assignee).                                   | Admin, Manager (own projects only) |
 | As an Admin or Manager, I want to delete a task.                                                                         | Admin, Manager (own projects only) |
-| As any project member, I want to update the status of a task.                                                            | All                                |
-| As any project member, I want to upload a file attachment to a task.                                                     | All                                |
-| As any project member, I want to download a file attachment from a task.                                                 | All                                |
-| As any project member, I want to add a comment to a task.                                                                | All                                |
+| As any project member, I want to update the status of a task.                                                            | Member, Manager, Admin             |
+| As any project member, I want to upload a file attachment to a task.                                                     | Member, Manager, Admin             |
+| As any project member, I want to download a file attachment from a task.                                                 | Member, Manager, Admin             |
+| As any project member, I want to add a comment to a task.                                                                | Member, Manager, Admin             |
 | As a system, I want key actions (login, logout, role changes, task updates, file events) to be recorded in an audit log. | System                             |
 
 ---
