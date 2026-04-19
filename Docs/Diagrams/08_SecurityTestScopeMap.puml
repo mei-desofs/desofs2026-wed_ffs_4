@@ -1,0 +1,25 @@
+@startmindmap
+* Security Testing Scope
+** Authentication
+*** POST /auth/login
+*** Valid and invalid credentials
+*** Rate limiting / lockout
+*** Expired or tampered token rejected
+** Authorization (RBAC)
+*** Non-member project access blocked
+*** Unauthorized task update blocked
+*** Missing Authorization header -> 401
+** Input Security
+*** SQL injection payload does not bypass
+*** XSS payload is output-encoded
+** File Security
+*** File size limit enforced (>25MB rejected)
+*** Type and MIME validation enforced
+*** Unauthorized download blocked
+*** Path traversal attempt rejected
+** Data and Logging
+*** Soft-deleted records hidden in normal queries
+*** Passwords and tokens are not logged
+** Expected HTTP Outcomes
+*** 200 / 400 / 401 / 403 / 404 / 413
+@endmindmap
