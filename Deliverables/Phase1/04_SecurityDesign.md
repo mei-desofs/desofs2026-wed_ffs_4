@@ -1,5 +1,19 @@
 # Security Design
 
+## Authorization (RBAC)
+
+**Model:**
+
+```
+┌─────────────────────────────────────────────┐
+│       Role-Based Access Control             │
+├─────────────────────────────────────────────┤
+│ ADMIN  → All CRUD ops, user mgmt            │
+│ MANAGER→ Own project CRUD, team management  │
+│ MEMBER → Assigned tasks, comments, files    │
+└─────────────────────────────────────────────┘
+```
+
 ## Data Security
 
 **Sensitive Data:**
@@ -195,6 +209,46 @@ Server Action:
 ---
 
 ## 2. Authorization Design
+
+### 2.1 Role-Based Access Control (RBAC)
+
+**Three Roles with Hierarchical Permissions:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ADMIN                                                       │
+│ Create/delete users                                         │
+│ Assign system-level roles                                   │
+│ Access all projects/tasks/files                             │
+│ View all audit logs                                         │
+│ Delete any data (soft or hard)                              │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ MANAGER                                                     │
+│ Create projects                                             │
+│ Manage members in own projects                              │
+│ Create/edit/delete all tasks in own projects                │
+│ Upload/download files in own projects                       │
+│ View project audit logs                                     │
+│ Assign tasks to members                                     │
+│ Cannot access other managers' projects                      │
+│ Cannot change user roles                                    │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ MEMBER                                                      │
+│ View assigned projects                                      │
+│ Create/edit own tasks (assigned to self)                    │
+│ Update own task status                                      │
+│ Upload/download files for own tasks                         │
+│ Add comments to any project task                            │
+│ Edit own comments                                           │
+│ Cannot assign tasks to others                               │
+│ Cannot create/delete projects                               │
+│ Cannot manage project members                               │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
