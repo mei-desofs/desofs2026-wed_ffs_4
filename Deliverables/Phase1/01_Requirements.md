@@ -9,18 +9,18 @@
 - FR-4: Role assignment (admin only). Only admins can assign roles (Admin/Manager/Member).
 
 ### Projects
-- FR-5: Create project (Manager+). Admins create new projects.
-- FR-6: List projects. Users see only projects where they are members.
-- FR-7: Update project (owner/admin). Admins/managers can edit project details.
-- FR-8: Soft-delete project. Deleted projects don't appear in queries but data is preserved.
+- FR-5: Create project (admin). Admins create new projects.
+- FR-6: List projects (member). Users see only projects where they are members.
+- FR-7: Update project (admin, manager). Admins/managers can edit project details.
+- FR-8: Soft-delete project (admin). Deleted projects don't appear in queries but data is preserved.
 - FR-9: Manage members (add/remove). Admins/Managers add/remove members from their projects.
 
 ### Tasks
 - FR-10: Create task in project (Manager+). Managers create tasks within projects.
 - FR-11: List tasks per project. Members view tasks from their project.
-- FR-12: Update task. Manager can edit it.
+- FR-12: Update task (manager). Manager can edit it.
 - FR-13: Change task status (TODO → IN_PROGRESS → DONE). Status transitions follow defined pipeline. Both the manager and the assigned member can update the status of a task.
-- FR-14: Soft-delete task. Deleted tasks don't appear but data is preserved.
+- FR-14: Soft-delete task (manager). Deleted tasks don't appear but data is preserved.
 - FR-15: Assign task to member. Manager assigns tasks to specific project members. A member can assign himself to a task if it is unassigned.
 
 ### Comments
