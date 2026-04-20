@@ -45,128 +45,32 @@
 
 ---
 
-## STRIDE Threat Analysis
+## STRIDE Threat Analysis (Baseado no DFD Nível 1)
 
-### Authentication Threats
-
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T1 | Brute force login | 4 | 5 | 20 | M1: Rate limiting (5 attempts/min, 20/hour/IP, 15min lockout) |
-| T2 | Weak password policy | 3 | 4 | 12 | M2: Min 12 chars, mixed complexity |
-| T3 | JWT token forgery | 2 | 5 | 10 | M3: HS256 signature + expiration validation |
-| T4 | Session hijacking | 3 | 5 | 15 | M4: HTTPS only, HttpOnly cookies, 24h expiry |
-
-### Authorization Threats
+### Authentication Threats (Spoofing & Info Disclosure)
+Foco nas interações com o **AuthService** e o tráfego que cruza a fronteira da **Internet**.
 
 | ID | Threat | L | I | Score | Mitigation |
 |---|---|---|---|---|---|
-| T5 | Role escalation | 3 | 5 | 15 | M5: Re-validate role from DB on every request |
-| T6 | Unauth project access | 3 | 5 | 15 | M6: Query filters + membership checks |
-| T7 | Unauth task access | 3 | 4 | 12 | M7: Ownership/manager/admin validation |
-| T8 | Missing authz checks | 4 | 4 | 16 | M8: Auth middleware on all endpoints |
+| T1 | Brute force/Credential stuffing on `AuthService` | 4 | 5 | 20 | M1: Rate limiting by IP/User, account lockout mechanisms |
+| T2 | JWT token interception over `Internet` | 3 | 5 | 15 | M2: Mandatory TLS 1.2+ for all traffic, Secure/HttpOnly flags |
+| T3 | Weak password generation | 3 | 4 | 12 | M3: Enforce password complexity (min 12 chars, entropy check) |
 
-### File Upload Threats
-
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T9 | Malicious file upload | 4 | 4 | 16 | M9: Whitelist types + MIME check, size limit |
-| T10 | File access bypass | 3 | 5 | 15 | M10: API-only endpoint, DB auth check |
-| T11 | Path traversal | 3 | 4 | 12 | M11: Filename validation, UUID storage |
-| T12 | Oversized upload | 4 | 3 | 12 | M12: 25MB limit, Content-Length check |
-
-### Data Access Threats
+### Authorization Threats (Elevation of Privilege & Info Disclosure)
+Foco nos controlos de acesso entre os papéis (User, Member, Manager, Admin) nos vários serviços.
 
 | ID | Threat | L | I | Score | Mitigation |
 |---|---|---|---|---|---|
-| T13 | SQL injection | 4 | 5 | 20 | M13: Parameterized queries only |
-| T14 | Database exposure | 2 | 5 | 10 | M14: Network isolation, no direct access |
+| T4 | Role escalation to `Admin` or `Manager` | 3 | 5 | 15 | M4: Strict server-side RBAC validation from DB on every request |
+| T5 | IDOR (Insecure Direct Object Reference) on `TaskService` | 4 | 4 | 16 | M5: Validate resource ownership/membership against JWT claims |
+| T6 | Unauthorized project modification via `ProjectService` | 3 | 5 | 15 | M6: Authorization middleware matching user role to project ID |
 
-### Application Threats
-
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T15 | XSS in comments | 4 | 4 | 16 | M15: HTML entity encoding on output |
-| T16 | Unauthorized comment edit | 3 | 4 | 12 | M16: Author/manager only validation |
-| T17 | Soft-delete visibility | 2 | 3 | 6 | M17: Query filters (WHERE deletedAt IS NULL) |
-| T21 | CSRF attack | 3 | 5 | 15 | M21: Bearer token in Authorization header |
-
-### Logging Threats
+### File Upload Threats (Tampering, DoS & Info Disclosure)
+Foco no **FileService** e na escrita/leitura no **Filesystem (FileStorage)**.
 
 | ID | Threat | L | I | Score | Mitigation |
 |---|---|---|---|---|---|
-| T18 | Sensitive data in logs | 3 | 4 | 12 | M18: Log scrubbing, no passwords/tokens |
-| T19 | Audit log tampering | 2 | 4 | 8 | M19: Append-only log, restricted access |
-| T20 | Incomplete audit trail | 3 | 3 | 9 | M20: Log all auth/authz/data operations |
+| T7 | Malicious executable upload to `FileStorage` | 4 | 5 | 20 | M7: Strict MIME validation, malware scanning, remove execute permissions on disk |
+| T8 | Storage exhaustion DoS (mass uploads) | 4 | 4 | 16 | M8: File size limits (e.g., 25MB), user/tenant quota enforcement |
+| T9 | Path traversal leading to arbitrary file access | 3 | 4 | 12 | M9: Strip paths from filenames, store files using UUIDs |
 
----
-
-## Risk Assessment Matrix
-
-**Critical Priority (P0) - Score ≥ 15:**
-- T1 (Brute force): 20 - M1 rate limiting
-- T4 (Session hijacking): 15 - M4 HTTPS/expiry
-- T5 (Role escalation): 15 - M5 DB re-validation
-- T6 (Unauth project): 15 - M6 membership checks
-- T8 (Missing authz): 16 - M8 middleware
-- T9 (Malicious upload): 16 - M9 whitelist
-- T10 (File bypass): 15 - M10 API endpoint
-- T13 (SQL injection): 20 - M13 parameterized queries
-- T15 (XSS): 16 - M15 output encoding
-- T21 (CSRF): 15 - M21 Bearer token
-
-**High Priority (P1) - Score 12-14:**
-- T2 (Weak password): 12 - M2 complexity rules
-- T7 (Unauth task): 12 - M7 ownership check
-- T11 (Path traversal): 12 - M11 UUID storage
-- T12 (Oversized file): 12 - M12 size limit
-- T16 (Comment edit): 12 - M16 auth check
-- T18 (Logs): 12 - M18 scrubbing
-
-**Medium Priority (P2) - Score < 12:**
-- T3 (Token forgery): 10 - M3 signature validation
-- T17 (Soft-delete): 6 - M17 query filters
-- T19 (Log tampering): 8 - M19 access control
-- T20 (Audit incomplete): 9 - M20 logging
-
----
-
-## Threat-to-Mitigation Mapping
-
-**P0 Mitigations Required for Phase 1:**
-- M1: Rate limiting implementation
-- M3: JWT signature validation
-- M4: Token expiration + HTTPS requirement
-- M5: Role re-validation from DB
-- M6: Project membership filters
-- M8: Authorization middleware
-- M9: File type whitelist + MIME validation
-- M10: Authenticated file endpoint
-- M13: Parameterized SQL queries
-- M15: Output encoding
-- M21: Bearer token authentication (CSRF prevention)
-
-**P1 Mitigations Required for Phase 1:**
-- M2: Password complexity rules
-- M7: Task access authorization
-- M11: Path traversal prevention
-- M12: File size enforcement
-- M16: Comment authorization
-- M18: Log scrubbing
-
-**P2 Mitigations (Nice-to-have Phase 1):**
-- M17: Soft-delete filtering
-- M19: Audit log protection
-- M20: Comprehensive logging
-
----
-
-## Implementation References
-
-| Mitigation | See Document | Section |
-|---|---|---|
-| M1-M5, M7-M8 | 04_SecurityDesign.md | Authentication & Authorization |
-| M9-M12 | 04_SecurityDesign.md | Secure File Handling |
-| M13, M18 | 04_SecurityDesign.md | Input Validation & Logging |
-| M15 | 04_SecurityDesign.md | Output Encoding (XSS Prevention) |
-| All test cases | 06_SecurityTesting.md | Security Test Strategy |
-| All requirements | 01_Requirements.md | Security Requirements (SR-1 to SR-13) |
