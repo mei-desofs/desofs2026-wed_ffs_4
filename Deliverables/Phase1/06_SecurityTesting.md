@@ -5,111 +5,112 @@
 ### Authentication Tests
 - [ ] Login with valid credentials → token returned
 - [ ] Login with invalid password → 401 Unauthorized
-- [ ] Login with non-existent user → 401 Unauthorized
 - [ ] Rate limit: 5 failed attempts → account locked 15 min
-- [ ] Token expiration: Use expired token → 401 Unauthorized
-- [ ] Token validation: Modify JWT payload → 401 Unauthorized
+- [ ] Token expiration: use expired token → 401 Unauthorized
+- [ ] Token validation: modify JWT payload → 401 Unauthorized
 
 ### Authorization Tests
-- [ ] MEMBER accesses project they're not in → 403 Forbidden
-- [ ] MEMBER updates task not assigned → 403 Forbidden
+- [ ] MEMBER accesses project they are not in → 403 Forbidden
+- [ ] MEMBER updates task not assigned to them → 403 Forbidden
 - [ ] MEMBER creates project → 403 Forbidden (only MANAGER+)
-- [ ] MANAGER edits other manager's project → 403 Forbidden
-- [ ] ADMIN can access any resource → 200 OK
-- [ ] Missing auth header → 401 Unauthorized
+- [ ] MANAGER edits another manager's project → 403 Forbidden
+- [ ] Missing auth header on protected endpoint → 401 Unauthorized
 
 ### Input Validation Tests
 - [ ] Upload file >25MB → 413 Payload Too Large
-- [ ] Upload .exe file → 400 Bad Request (not in whitelist)
+- [ ] Upload `.exe` file → 400 Bad Request (not in whitelist)
 - [ ] Upload with MIME type mismatch → 400 Bad Request
-- [ ] Comment with 5000+ chars → 422 Validation Error
+- [ ] Comment with 5000+ chars → 400 Bad Request
 - [ ] Task title empty → 400 Bad Request
-- [ ] Username with special chars → 400 Bad Request
 
 ### XSS Prevention Tests
-- [ ] Comment with `<script>alert('XSS')</script>` → Stored as-is, displayed encoded
-- [ ] Verify output: `&lt;script&gt;` → XSS prevented
+- [ ] Comment with `<script>alert('XSS')</script>` → stored as text, displayed encoded
 
 ### SQL Injection Tests
-- [ ] Search with `' OR '1'='1` → No SQL injection
-- [ ] Username with `';DROP TABLE users;--` → No SQL injection
-- [ ] Verify parameterized queries used
+- [ ] Search with `' OR '1'='1` → no SQL injection
+- [ ] Verify parameterized queries are used
 
 ### File Access Tests
-- [ ] Direct URL access to /storage/projects/1/... → 403 Forbidden
+- [ ] Direct URL access to `/storage/projects/1/...` → 403 Forbidden
 - [ ] Download via `/attachments/{id}/download` (member) → 200 OK
 - [ ] Download via `/attachments/{id}/download` (non-member) → 403 Forbidden
 - [ ] Download after file soft-deleted → 404 Not Found
 
 ### Soft-Delete Tests
-- [ ] Delete project → Project hidden from list
-- [ ] Query includes `WHERE deletedAt IS NULL` → Deleted records excluded
-- [ ] Admin views audit log → Can see soft-deleted records
+- [ ] Delete project → project hidden from list
+- [ ] Query excludes deleted records 
 
 ### Path Traversal Tests
-- [ ] Filename with `../../etc/passwd` → Rejected or sanitized
-- [ ] Filename with `../../../ → Rejected
-- [ ] Stored filename is UUID → Cannot guess paths
+- [ ] Filename with `../../etc/passwd` → rejected or sanitized
+- [ ] Stored filename is UUID → cannot guess paths
 
 ## Abuse Case Scenarios
 
-| Scenario | Attack | Expected | Result |
-|----------|--------|----------|--------|
-| Brute Force | Rapid login attempts (100/min) | Account locks after 5 failures | Pass |
-| Role Escalation | Modify JWT role claim | Still MEMBER (re-fetched from DB) | Pass |
-| Project Bypass | Access `/projects/999/tasks` (not a member) | 403 Forbidden | Pass |
-| File Access Bypass | Direct `/storage/projects/1/file.pdf` URL | 403 Forbidden | Pass |
-| XSS Injection | Comment: `<img src=x onerror="alert('xss')">` | Stored as text, displayed encoded | Pass |
-| SQLi in Search | Search: `term' OR '1'='1` | Only valid search results | Pass |
-| Privilege via File | Upload malware.exe as document.pdf | Rejected (MIME type check) | Pass |
-| Account Takeover | Intercept session token (HTTP) | HTTPS prevents (Phase 2) | - |
-
-## ASVS Mapping (v4)
-
-| ASVS Control | Test Case | Status |
-|---|---|---|
-| V1: Architecture | Threat model documented | Pass |
-| V2: Authentication | Login, token validation, rate limiting | Pass |
-| V4: Access Control | RBAC, project isolation, task ownership | Pass |
-| V5: Validation | Input validation, file upload | Pass |
-| V8: Data Protection | Passwords hashed, soft-delete | Pass |
-| V9: Communication | HTTPS enforced (Phase 2) | - |
-| V10: Malware | File type whitelist, no execution | Pass |
+| Scenario | Attack | Expected |
+|----------|--------|----------|
+| Brute Force | Rapid login attempts (100/min) | Account locks after 5 failures |
+| Role Escalation | Modify JWT role claim | Still MEMBER (re-fetched from DB) |
+| Project Bypass | Access `/projects/999/tasks` (not a member) | 403 Forbidden |
+| File Access Bypass | Direct `/storage/projects/1/file.pdf` URL | 403 Forbidden |
+| XSS Injection | Comment: `<img src=x onerror="alert('xss')">` | Stored as text, displayed encoded |
+| SQLi in Search | Search: `term' OR '1'='1` | Only valid search results |
 
 ## Test Execution Order
 
-1. **Unit Tests:** Service layer (auth, validation, RBAC)
+1. **Unit Tests:** service layer (auth, validation, RBAC)
 2. **Integration Tests:** API endpoints (CRUD, authorization)
-3. **Security Tests:** Abuse cases, injection, path traversal
-4. **Regression Tests:** All endpoints after each fix
+3. **Security Tests:** abuse cases, injection, path traversal
+4. **Regression Tests:** all endpoints after each fix
+
+## Security Testing Methodology
+
+- **Approach:** risk-based testing using threat priorities from STRIDE analysis.
+- **Test design:** for each critical threat, define at least one negative test and expected secure behavior.
+- **Execution evidence:** store request, response, timestamp, and tester notes for each executed test.
+- **Pass/Fail rule:** a test passes only when the expected security result is observed with no bypass.
 
 ## Test Coverage Goals
 
 - **Unit:** >70% code coverage
-- **Integration:** All CRUD endpoints
-- **Security:** All threat scenarios from threat model
-   - Soft-delete integrity
-   - Audit trail completeness
-   - Database constraints
+- **Integration:** all critical CRUD endpoints
+- **Security:** all critical threat scenarios from threat model
 
-5. **API Security** (10% of tests)
-   - HTTPS enforcement (Phase 2)
-   - CORS configuration
-   - Error handling (no sensitive info leakage)
-   - Rate limiting enforcement
+## Threat Modeling Review Process
 
----
+1. Re-check threat list after any relevant API, role, or file-handling change.
+2. Update impacted tests in this document before implementation is considered complete.
+3. Re-run all affected security tests and regression tests.
+4. Record decisions and results in project documentation.
 
-## 2. Unit Tests
+## Critical Security Coverage (Self-Contained)
 
-### 2.1 Authentication Tests
+This plan verifies the following essential protections:
 
-**Test Suite: `AuthServiceTest.java`**
+- **Authentication strength:** invalid login is rejected, brute-force attempts are limited, expired/tampered tokens are rejected.
+- **Authorization rules:** users cannot access projects/tasks outside their permissions.
+- **Input safety:** malicious input does not execute code and does not break queries.
+- **File protection:** invalid file type, MIME mismatch, oversized uploads, and unauthorized downloads are blocked.
+- **Data lifecycle safety:** soft-deleted data is not returned in normal queries.
+- **Secure logging:** sensitive values (passwords/tokens) are never stored in logs.
 
-```java
-class AuthServiceTest {
-  
-  // TC-1.1: Valid credentials should return JWT token
-  @Test
-  void testLoginWithValidCredentials() {
-    // Setup
+## Mini Traceability
+
+| Security Requirement Area | How it is tested in this plan |
+|---|---|
+| Authentication and session control | Login success/failure, rate limiting, expired/tampered token checks |
+| Authorization and role enforcement | Forbidden access tests for non-members and unauthorized role actions |
+| Input validation and injection prevention | SQL injection payload tests and XSS payload encoding validation |
+| Secure file handling | File size/type/MIME validation, path traversal protection, protected download access |
+| Data protection and auditability | Soft-delete visibility checks and verification that logs do not expose secrets |
+
+## ASVS Coverage Summary
+
+| ASVS Area | Coverage in this plan |
+|---|---|
+| V1 Architecture | Threat model and trust-boundary-based tests |
+| V2 Authentication | Login, token validation, rate limiting |
+| V4 Access Control | RBAC and project/task isolation tests |
+| V5 Validation | Input validation, SQLi and XSS checks |
+| V8 Data Protection | Soft-delete visibility and protected data handling |
+| V9 Communication | Authenticated API access and secure token usage |
+| V10 Malicious Input/File | File type, size, MIME, and path traversal checks |
