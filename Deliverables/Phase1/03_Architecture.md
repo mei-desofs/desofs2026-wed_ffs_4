@@ -1,5 +1,11 @@
 # Architecture
 
+## Architecture Diagrams
+
+- Component Architecture: ![](../../Docs/Diagrams/04_ComponentArchitecture.png)
+- Deployment Diagram: ![](../../Docs/Diagrams/Teuxdeux_Deployment.png)
+- Database Schema: ![](../../Docs/Diagrams/06_DatabaseSchema.png)
+
 ## Layered Design
 
 ```

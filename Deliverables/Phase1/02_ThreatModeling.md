@@ -2,6 +2,12 @@
 
 **Implementation Details:** See 04_SecurityDesign.md for all security implementations
 
+## Threat Modeling Diagrams
+
+- DFD Level 0: ![](../../Docs/Diagrams/dfd_lvl0.png)
+- DFD Level 1: ![](../../Docs/Diagrams/dfd_lvl1.drawio.png)
+- DFD Level 2 (Authentication): ![](../../Docs/Diagrams/dfd_lvl2_auth.png)
+
 ---
 
 ## Risk Score Calculation
@@ -35,6 +41,11 @@
 - File Operations (upload, download, storage)
 - Audit Logging
 
+**Threat Model Inputs:**
+- Assets inventory: [Assets.md](Assets.md)
+- Entry/exit surface: [EntryPoints.md](EntryPoints.md), [ExitPoints.md](ExitPoints.md)
+- Trust assumptions: [TrustLevels.md](TrustLevels.md)
+
 ---
 
 ## Trust Boundaries
@@ -45,10 +56,10 @@
 
 ---
 
-## STRIDE Threat Analysis (Baseado no DFD Nível 1)
+## STRIDE Threat Analysis
 
 ### Authentication Threats (Spoofing & Info Disclosure)
-Foco nas interações com o **AuthService** e o tráfego que cruza a fronteira da **Internet**.
+Focus on interactions with the **AuthService** and the traffic that crosses the **Internet** boundary.
 
 | ID | Threat                                           | L | I | Score | Mitigation                                                    |
 |----|--------------------------------------------------|---|---|-------|---------------------------------------------------------------|
@@ -57,7 +68,7 @@ Foco nas interações com o **AuthService** e o tráfego que cruza a fronteira d
 | T3 | Weak password generation                         | 3 | 4 | 12    | M3: Enforce password complexity (min 12 chars, entropy check) |
 
 ### Authorization Threats (Elevation of Privilege & Info Disclosure)
-Foco nos controlos de acesso entre os papéis (User, Member, Manager, Admin) nos vários serviços.
+Focus on access controls between roles (User, Member, Manager, Admin) in the various services.
 
 | ID | Threat                                                   | L | I | Score | Mitigation                                                      |
 |----|----------------------------------------------------------|---|---|-------|-----------------------------------------------------------------|
@@ -66,7 +77,7 @@ Foco nos controlos de acesso entre os papéis (User, Member, Manager, Admin) nos
 | T6 | Unauthorized project modification via `ProjectService`   | 3 | 5 | 15    | M6: Authorization middleware matching user role to project ID   |
 
 ### File Upload Threats (Tampering, DoS & Info Disclosure)
-Foco no **FileService** e na escrita/leitura no **Filesystem (FileStorage)**.
+Focus on the **FileService** and writing/reading in the **Filesystem (FileStorage)**.
 
 | ID | Threat                                          | L | I | Score | Mitigation                                                                       |
 |----|-------------------------------------------------|---|---|-------|----------------------------------------------------------------------------------|
@@ -75,7 +86,7 @@ Foco no **FileService** e na escrita/leitura no **Filesystem (FileStorage)**.
 | T9 | Path traversal leading to arbitrary file access | 3 | 4 | 12    | M9: Strip paths from filenames, store files using UUIDs                          |
 
 ### Data Access Threats (Tampering & Info Disclosure)
-Foco na fronteira entre a **API** e a **Database**.
+Focus on the boundary between the **API** and the **Database**.
 
 | ID  | Threat                                       | L | I | Score | Mitigation                                                               |
 |-----|----------------------------------------------|---|---|-------|--------------------------------------------------------------------------|
@@ -83,7 +94,7 @@ Foco na fronteira entre a **API** e a **Database**.
 | T11 | Exposure of PII/Credentials in `Users` table | 2 | 5 | 10    | M11: Strong hashing (Argon2id/Bcrypt) for passwords, encrypt PII at rest |
 
 ### Application Threats (Tampering & Repudiation)
-Foco nas interações de utilizador com o **CommentService** e transições de estado.
+Focus on user interactions with the **CommentService** and state transitions.
 
 | ID  | Threat                               | L | I | Score | Mitigation                                                               |
 |-----|--------------------------------------|---|---|-------|--------------------------------------------------------------------------|
@@ -91,7 +102,7 @@ Foco nas interações de utilizador com o **CommentService** e transições de e
 | T13 | Repudiation of critical task changes | 2 | 4 | 8     | M13: Ensure `TaskService` cannot bypass `AuditService` for state changes |
 
 ### Logging Threats (Tampering & Repudiation)
-Foco no **AuditService** e na tabela **Audit Logs**.
+Focus on the **AuditService** and the **Audit Logs** table.
 
 | ID  | Threat                                     | L | I | Score | Mitigation                                                         |
 |-----|--------------------------------------------|---|---|-------|--------------------------------------------------------------------|

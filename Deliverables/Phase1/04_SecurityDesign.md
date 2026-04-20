@@ -1,5 +1,27 @@
 # Security Design
 
+## Security Diagrams
+
+- Authentication Flow: ![](../../Docs/Diagrams/02_AuthenticationFlow.png)
+- File Upload Security Flow: ![](../../Docs/Diagrams/03_FileUploadFlow.png)
+- RBAC Matrix: ![](../../Docs/Diagrams/07_RBACMatrix.png)
+
+## Authentication
+
+**Token Validation:**
+- On every request: Extract bearer token from Authorization header
+- Validate signature with server secret (HS256)
+- Check expiration (exp claim)
+- Re-fetch user role from DB (never trust token role)
+- If invalid: return 401 Unauthorized
+
+**Passwords:**
+- Hash with bcrypt, salt rounds ≥ 10
+- Never store plaintext
+- Min 12 chars: uppercase, lowercase, digits, special chars
+
+---
+
 ## Authorization (RBAC)
 
 **Model:**

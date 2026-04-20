@@ -1,5 +1,9 @@
 # Security Testing
 
+## Security Testing Scope Diagram
+
+- Scope Map: ![](../../Docs/Diagrams/08_SecurityTestScopeMap.png)
+
 ## Test Categories
 
 ### Authentication Tests

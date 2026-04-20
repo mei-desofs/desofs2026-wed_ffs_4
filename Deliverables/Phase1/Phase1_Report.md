@@ -25,9 +25,9 @@
 
 1. [System Overview](#1-system-overview)
    - [1.1 System Purpose](#11-system-purpose)
-   - [1.2 Functional Requirements](#12-functional-requirements)
-   - [1.3 Non-Functional Requirements](#13-non-functional-requirements)
-   - [1.4 Domain Model](#14-domain-model)
+   - [1.2 Phase 1: Analysis](#12-phase-1-analysis)
+2. [Phase 1 Document Set](#2-phase-1-document-set)
+3. [Conformance Check (Project.pdf)](#3-conformance-check-projectpdf)
 
 ---
 
@@ -39,47 +39,73 @@ Teuxdeux is a collaborative task management platform built for teams, enabling t
 
 ---
 
-### 1.2 Functional Requirements
+### 1.2 Phase 1: Analysis
 
-| User Story                                                                                                               | Role(s)                            |
-| ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
-| As a visitor, I want to register with an email and password so that I can access the platform.                           | —                                  |
-| As a registered user, I want to log in with my email and password.                                                       | All                                |
-| As an authenticated user, I want to log out and have my session invalidated.                                             | All                                |
-| As an Admin, I want to create a new project with a title and description.                                                | Admin                              |
-| As an Admin, I want to delete a project.                                                                                 | Admin                              |
-| As an Admin or Manager, I want to edit a project's title and description.                                                | Admin, Manager (own projects only) |
-| As an Admin, I want to add users to a project and assign them the Member role.                                           | Admin, Manager (own projects only) |
-| As any project member, I want to view the projects I belong to or have created.                                          | All                                |
-| As an Admin or Manager, I want to create a task within a project, setting its title, description, and assignee.          | Admin, Manager (own projects only) |
-| As an Admin or Manager, I want to edit all task fields (title, description, assignee).                                   | Admin, Manager (own projects only) |
-| As an Admin or Manager, I want to delete a task.                                                                         | Admin, Manager (own projects only) |
-| As any project member, I want to update the status of a task.                                                            | Member, Manager, Admin             |
-| As any project member, I want to upload a file attachment to a task.                                                     | Member, Manager, Admin             |
-| As any project member, I want to download a file attachment from a task.                                                 | Member, Manager, Admin             |
-| As any project member, I want to add a comment to a task.                                                                | Member, Manager, Admin             |
-| As a system, I want key actions (login, logout, role changes, task updates, file events) to be recorded in an audit log. | System                             |
+Our Phase 1 approach followed a simple sequence: define what must be built, understand what can go wrong, design a secure structure, decide concrete protections, and finally define how those protections will be tested.
 
----
+1. **Start with clear scope and security expectations** — [01_Requirements.md](01_Requirements.md)
+   - **Why:** We needed a shared baseline for functionality, constraints, and explicit security requirements before making design decisions.
+   - **Expected outcome:** A stable set of FR/NFR/SR requirements to drive all next documents and avoid ambiguity.
 
-### 1.3 Non-Functional Requirements
+2. **Assess realistic threats early** — [02_ThreatModeling.md](02_ThreatModeling.md)
+   - **Why:** Security controls should be justified by risk, not chosen arbitrarily.
+   - **Expected outcome:** Prioritized STRIDE threats, risk scoring, and mitigation mapping to focus effort on highest-impact issues.
 
-| Category        | Requirement                                                                                                                         |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Scalability     | The application layer must be stateless so that horizontal scaling by adding additional instances requires no architectural change. |
-| Data Integrity  | All database writes must be performed within ACID transactions, partial states must be rolled back on failure.                      |
-| Maintainability | All Maven dependencies must be pinned to explicit release versions.                                                                 |
-| Observability   | All security-relevant events must emit log entries to the audit log.                                                                |
+3. **Translate requirements and risks into technical structure** — [03_Architecture.md](03_Architecture.md)
+   - **Why:** The architecture had to support role separation, secure data flows, and controlled file handling from the start.
+   - **Expected outcome:** A coherent layered architecture, domain/data model context, storage boundaries, and secure integration points.
+
+4. **Define how security is implemented in practice** — [04_SecurityDesign.md](04_SecurityDesign.md)
+   - **Why:** High-level architecture is not enough; we needed concrete rules for authentication, authorization, validation, file handling, and auditing.
+   - **Expected outcome:** Implementation-ready security decisions aligned with identified threats and project constraints.
+
+5. **Plan verification of all critical controls** — [06_SecurityTesting.md](06_SecurityTesting.md)
+   - **Why:** Security requirements are only meaningful if we can verify them through repeatable tests and abuse scenarios.
+   - **Expected outcome:** A practical security testing plan with traceability from risks/requirements to test cases.
+
+This sequence gave the team a consistent narrative from intent to verification, reducing rework and improving alignment with the Phase 1 deliverable goals.
+
 
 ---
 
-### 1.4 Domain Model
+## 2. Phase 1 Document Set
 
-![](/Docs/Diagrams/Domain_Model.svg)
+### Core Deliverables
 
-**User** is the root aggregate for identity. Every platform interaction requires an authenticated User.
-**Project** is the primary organizational aggregate created by an Admin. Project membership is represented by the `ProjectMember` join entity.
-**Task** is the unit of work within a Project. It carries its own lifecycle via `TaskStatus`. Optionally, the `assigneeId` links to an assigned User. Tasks are the primary attachment point for both `Attachment` records and `Comment` records.
-**Attachment** represents a file uploaded to a Task. The user-supplied `userFileName` is stored as metadata only and never used in filesystem operations directly.
+| Topic | Document |
+| --- | --- |
+| Requirements (FR/NFR/SR) | [01_Requirements.md](01_Requirements.md) |
+| Threat Modeling (STRIDE + Risk) | [02_ThreatModeling.md](02_ThreatModeling.md) |
+| Secure Architecture | [03_Architecture.md](03_Architecture.md) |
+| Security Design (AuthN/AuthZ/Data/Input/Logging) | [04_SecurityDesign.md](04_SecurityDesign.md) |
+| Security Test Plan + Abuse Cases | [06_SecurityTesting.md](06_SecurityTesting.md) |
 
----
+### Supporting Deliverables
+
+| Topic | Document |
+| --- | --- |
+| Assets inventory | [Assets.md](Assets.md) |
+| Entry points | [EntryPoints.md](EntryPoints.md) |
+| Exit points | [ExitPoints.md](ExitPoints.md) |
+| Trust levels | [TrustLevels.md](TrustLevels.md) |
+
+## 3. Conformance Check (Project.pdf)
+
+Based on [Project.pdf](../../Project.pdf), Phase 1 expectations are addressed as follows:
+
+- Analysis/Requirements: covered in [01_Requirements.md](01_Requirements.md)
+- Threat modeling + risk + mitigations: covered in [02_ThreatModeling.md](02_ThreatModeling.md)
+- Secure architecture/design: covered in [03_Architecture.md](03_Architecture.md) and [04_SecurityDesign.md](04_SecurityDesign.md)
+- Security test planning + abuse cases + traceability: covered in [06_SecurityTesting.md](06_SecurityTesting.md)
+
+- Main-document linking (rubric: organization): consolidated in this report and referenced document set
+
+Notes for rubric alignment:
+- DFD references included in threat modeling document.
+- Domain model and architecture diagrams linked in requirements/architecture sections.
+- Security flow and RBAC diagrams linked in security design.
+
+### Security Standards / Checklist
+
+- ASVS checklist: [ASVS_5.0_Tracker.xlsx](../../Materials/ASVS_5.0_Tracker.xlsx)
+- ASVS reference standard: [OWASP_Application_Security_Verification_Standard_5.0.0_en.pdf](../../Materials/OWASP_Application_Security_Verification_Standard_5.0.0_en.pdf)
