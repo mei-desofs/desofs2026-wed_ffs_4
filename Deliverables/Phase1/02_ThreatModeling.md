@@ -50,53 +50,53 @@
 ### Authentication Threats (Spoofing & Info Disclosure)
 Foco nas interações com o **AuthService** e o tráfego que cruza a fronteira da **Internet**.
 
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T1 | Brute force/Credential stuffing on `AuthService` | 4 | 5 | 20 | M1: Rate limiting by IP/User, account lockout mechanisms |
-| T2 | JWT token interception over `Internet` | 3 | 5 | 15 | M2: Mandatory TLS 1.2+ for all traffic, Secure/HttpOnly flags |
-| T3 | Weak password generation | 3 | 4 | 12 | M3: Enforce password complexity (min 12 chars, entropy check) |
+| ID | Threat                                           | L | I | Score | Mitigation                                                    |
+|----|--------------------------------------------------|---|---|-------|---------------------------------------------------------------|
+| T1 | Brute force/Credential stuffing on `AuthService` | 4 | 5 | 20    | M1: Rate limiting by IP/User, account lockout mechanisms      |
+| T2 | JWT token interception over `Internet`           | 3 | 5 | 15    | M2: Mandatory TLS 1.2+ for all traffic, Secure/HttpOnly flags |
+| T3 | Weak password generation                         | 3 | 4 | 12    | M3: Enforce password complexity (min 12 chars, entropy check) |
 
 ### Authorization Threats (Elevation of Privilege & Info Disclosure)
 Foco nos controlos de acesso entre os papéis (User, Member, Manager, Admin) nos vários serviços.
 
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T4 | Role escalation to `Admin` or `Manager` | 3 | 5 | 15 | M4: Strict server-side RBAC validation from DB on every request |
-| T5 | IDOR (Insecure Direct Object Reference) on `TaskService` | 4 | 4 | 16 | M5: Validate resource ownership/membership against JWT claims |
-| T6 | Unauthorized project modification via `ProjectService` | 3 | 5 | 15 | M6: Authorization middleware matching user role to project ID |
+| ID | Threat                                                   | L | I | Score | Mitigation                                                      |
+|----|----------------------------------------------------------|---|---|-------|-----------------------------------------------------------------|
+| T4 | Role escalation to `Admin` or `Manager`                  | 3 | 5 | 15    | M4: Strict server-side RBAC validation from DB on every request |
+| T5 | IDOR (Insecure Direct Object Reference) on `TaskService` | 4 | 4 | 16    | M5: Validate resource ownership/membership against JWT claims   |
+| T6 | Unauthorized project modification via `ProjectService`   | 3 | 5 | 15    | M6: Authorization middleware matching user role to project ID   |
 
 ### File Upload Threats (Tampering, DoS & Info Disclosure)
 Foco no **FileService** e na escrita/leitura no **Filesystem (FileStorage)**.
 
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T7 | Malicious executable upload to `FileStorage` | 4 | 5 | 20 | M7: Strict MIME validation, malware scanning, remove execute permissions on disk |
-| T8 | Storage exhaustion DoS (mass uploads) | 4 | 4 | 16 | M8: File size limits (e.g., 25MB), user/tenant quota enforcement |
-| T9 | Path traversal leading to arbitrary file access | 3 | 4 | 12 | M9: Strip paths from filenames, store files using UUIDs |
+| ID | Threat                                          | L | I | Score | Mitigation                                                                       |
+|----|-------------------------------------------------|---|---|-------|----------------------------------------------------------------------------------|
+| T7 | Malicious executable upload to `FileStorage`    | 4 | 5 | 20    | M7: Strict MIME validation, malware scanning, remove execute permissions on disk |
+| T8 | Storage exhaustion DoS (mass uploads)           | 4 | 4 | 16    | M8: File size limits (e.g., 25MB), user/tenant quota enforcement                 |
+| T9 | Path traversal leading to arbitrary file access | 3 | 4 | 12    | M9: Strip paths from filenames, store files using UUIDs                          |
 
 ### Data Access Threats (Tampering & Info Disclosure)
 Foco na fronteira entre a **API** e a **Database**.
 
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T10 | SQL/NoSQL Injection via API services | 3 | 5 | 15 | M10: Use ORM or strictly parameterized queries everywhere |
-| T11 | Exposure of PII/Credentials in `Users` table | 2 | 5 | 10 | M11: Strong hashing (Argon2id/Bcrypt) for passwords, encrypt PII at rest |
+| ID  | Threat                                       | L | I | Score | Mitigation                                                               |
+|-----|----------------------------------------------|---|---|-------|--------------------------------------------------------------------------|
+| T10 | SQL/NoSQL Injection via API services         | 3 | 5 | 15    | M10: Use ORM or strictly parameterized queries everywhere                |
+| T11 | Exposure of PII/Credentials in `Users` table | 2 | 5 | 10    | M11: Strong hashing (Argon2id/Bcrypt) for passwords, encrypt PII at rest |
 
 ### Application Threats (Tampering & Repudiation)
 Foco nas interações de utilizador com o **CommentService** e transições de estado.
 
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T12 | Stored XSS via `CommentService` | 4 | 4 | 16 | M12: Strict input validation and context-aware output encoding |
-| T13 | Repudiation of critical task changes | 2 | 4 | 8 | M13: Ensure `TaskService` cannot bypass `AuditService` for state changes |
+| ID  | Threat                               | L | I | Score | Mitigation                                                               |
+|-----|--------------------------------------|---|---|-------|--------------------------------------------------------------------------|
+| T12 | Stored XSS via `CommentService`      | 4 | 4 | 16    | M12: Strict input validation and context-aware output encoding           |
+| T13 | Repudiation of critical task changes | 2 | 4 | 8     | M13: Ensure `TaskService` cannot bypass `AuditService` for state changes |
 
 ### Logging Threats (Tampering & Repudiation)
 Foco no **AuditService** e na tabela **Audit Logs**.
 
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T14 | Audit log tampering by compromised `Admin` | 2 | 5 | 10 | M14: Use append-only or write-only DB credentials for `Audit Logs` |
-| T15 | Sensitive data leakage in audit events | 3 | 4 | 12 | M15: Data scrubbing pipeline before writing to `AuditService` |
+| ID  | Threat                                     | L | I | Score | Mitigation                                                         |
+|-----|--------------------------------------------|---|---|-------|--------------------------------------------------------------------|
+| T14 | Audit log tampering by compromised `Admin` | 2 | 5 | 10    | M14: Use append-only or write-only DB credentials for `Audit Logs` |
+| T15 | Sensitive data leakage in audit events     | 3 | 4 | 12    | M15: Data scrubbing pipeline before writing to `AuditService`      |
 
 ---
 
