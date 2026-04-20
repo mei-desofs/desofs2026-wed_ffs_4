@@ -1,5 +1,10 @@
 # Requirements
 
+## Supporting Diagrams
+
+- Use Case Diagram: ![](../../Docs/Diagrams/Teuxdeux_UseCase.png)
+- Domain Model: ![](../../Docs/Diagrams/Domain_Model.svg)
+
 ## Functional Requirements
 
 ### Authentication
