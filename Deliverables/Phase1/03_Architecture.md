@@ -3,33 +3,37 @@
 ## Layered Design
 
 ```
-┌────────────────────┐
-│  API Controllers   │ (REST endpoints)
-├────────────────────┤
-│  Services          │ (Auth, Project, Task, Comment, File, Audit)
-├────────────────────┤
-│  Repositories      │ (Data access, parameterized queries)
-├────────────────────┤
-│  Database │ Filesystem │ Audit Log
-└────────────────────┘
+┌─────────────────────────────────────────┐
+│  API Controllers                        │ (REST endpoints)
+├─────────────────────────────────────────┤
+│  Services                               │ (Auth, Project, Task, Comment, File, Audit)
+├─────────────────────────────────────────┤
+│  Repositories                           │ (Data access, parameterized queries)
+├─────────────────────────────────────────┤
+│  Database │ Filesystem │ Audit Log      │
+└─────────────────────────────────────────┘
 ```
 
 ## Components
 
 **API Layer:**
-- AuthController (login, logout, refresh)
-- ProjectController (CRUD, members)
-- TaskController (CRUD, status)
-- CommentController (CRUD)
-- AttachmentController (upload, download)
+| Controller | Endpoints |
+|---|---|
+| `AuthController` | `POST /auth/login`, `POST /auth/logout` |
+| `ProjectController` | `GET/POST /projects`, `GET/PUT/DELETE /projects/{id}`, `GET/POST /projects/{id}/members`, `DELETE /projects/{id}/members/{userId}` |
+| `TaskController` | `GET/POST /projects/{id}/tasks`, `GET/PUT/DELETE /tasks/{id}`, `PATCH /tasks/{id}/status` |
+| `CommentController` | `GET/POST /tasks/{id}/comments`, `PUT/DELETE /comments/{id}` |
+| `AttachmentController` | `POST /tasks/{id}/attachments`, `GET /attachments/{id}`, `DELETE /attachments/{id}` |
 
 **Service Layer:**
-- AuthService: JWT validation, bcrypt
-- ProjectService: RBAC checks, soft-delete
-- TaskService: Assignment, status workflow
-- CommentService: Output encoding
-- FileService: Validation, storage, access control
-- AuditService: Log operations
+| Service | Responsibility |
+|---|---|
+| `AuthService` | JWT creation & validation, bcrypt password verification |
+| `ProjectService` | Project CRUD, RBAC checks, soft-delete |
+| `TaskService` | Task CRUD, assignment, status workflow, soft-delete |
+| `CommentService` | Comment CRUD, output encoding, soft-delete |
+| `FileService` | File validation, storage, access control, soft-delete |
+| `AuditService` | Audit logging |
 
 **Data Access:**
 - UserRepository, ProjectRepository, TaskRepository, CommentRepository, AttachmentRepository
@@ -39,35 +43,72 @@
 ## Database Schema
 
 ```
-users (id, username, password_hash, role, createdBy, updatedBy, deletedAt, deletedBy)
-projects (id, title, description, created_by, createdAt, updatedAt, deletedAt, deletedBy)
-project_members (id, project_id, user_id, role_in_project, joined_at)
-tasks (id, project_id, title, description, assigned_to, status, priority, 
-       created_by, createdAt, updatedAt, deletedAt, deletedBy)
-comments (id, task_id, content, author_id, createdAt, updatedAt, deletedAt, deletedBy)
-attachments (id, task_id, original_filename, stored_filename, file_size, mime_type,
-             uploaded_by, uploadedAt, deletedAt, deletedBy)
-audit_logs (id, user_id, operation, entity_type, entity_id, old_values, new_values, 
-            ip_address, user_agent, created_at)
+users (
+  id, username, email, password_hash, role,
+  created_by, updated_by,
+  created_at, updated_at, deleted_at, deleted_by
+)
+
+projects (
+  id, title, description,
+  created_by,
+  created_at, updated_at, deleted_at, deleted_by
+)
+
+project_members (
+  id, project_id, user_id,
+  role_in_project,
+  joined_at
+)
+
+tasks (
+  id, project_id, title, description,
+  assigned_to, status, priority,
+  created_by,
+  created_at, updated_at, deleted_at, deleted_by
+)
+
+comments (
+  id, task_id, content, author_id,
+  created_at, updated_at, deleted_at, deleted_by
+)
+
+attachments (
+  id, task_id,
+  original_filename, stored_filename,
+  file_size, mime_type,
+  uploaded_by, uploaded_at, deleted_at, deleted_by
+)
+
+audit_logs (
+  id, user_id, operation, entity_type, entity_id,
+  old_values, new_values,
+  ip_address, user_agent, created_at
+)
 ```
 
 ## File Storage
 
 ```
-/var/opt/teuxdeux/storage/projects/{projectId}/tasks/{taskId}/attachments/
-├── {uuid}_{timestamp}.pdf
-├── {uuid}_{timestamp}.jpg
-└── {uuid}_{timestamp}.docx
+/var/opt/teuxdeux/storage/
+└── projects/{projectId}/
+    └── tasks/{taskId}/
+        └── attachments/
+            ├── {uuid}_{timestamp}.pdf
+            ├── {uuid}_{timestamp}.jpg
+            └── {uuid}_{timestamp}.docx
 ```
 
-- Files stored outside web root (NOT directly accessible)
+- Files stored outside web root (NEVER directly accessible via URL)
 - Named with UUID to prevent guessing
 - Served via authenticated API endpoint only
-
+- Only allowed MIME types (whitelist)
+- Max file size: 25MB
+  
 ## Indexes
 
 **Performance:**
-- users.username, projects.created_by, tasks.project_id│  Repositories      │ (Data access, parameterized queries)
+- users.username, projects.created_by, tasks.project_id
 - tasks.assigned_to, comments.task_id, attachments.task_id
 
 **Soft-Delete:**
@@ -99,8 +140,9 @@ audit_logs (id, user_id, operation, entity_type, entity_id, old_values, new_valu
 }
 ```
 
-## Authentication Headers
+## Authentication
 
+**Header:**
 ```
 Authorization: Bearer <JWT_TOKEN>
 ```
@@ -115,11 +157,18 @@ Authorization: Bearer <JWT_TOKEN>
   "aud": "teuxdeux-api"
 }
 ```
+**Expiry:**
+```
+24 hours (deliberate tradeoff — no refresh token mechanism exists)
 
+Known limitation: No server-side token revocation.
+Logout = client deletes the token. A stolen token remains valid until expiry.
+Accepted for Phase 1. Mitigation: short expiry window.
+```
 ## Security Layers
 
-1. **Network:** HTTPS/TLS (Phase 2)
-2. **Authentication:** JWT tokens, bcrypt passwords
+1. **Network:** HTTPS/TLS (phase 1, self-signed)
+2. **Authentication:** JWT (stateless, 24h expiry), bcrypt >= 12 rounds
 3. **Authorization:** RBAC middleware on all endpoints
 4. **Input Validation:** Type checks, whitelist file types
 5. **Data Access:** Parameterized queries, soft-delete enforcement
