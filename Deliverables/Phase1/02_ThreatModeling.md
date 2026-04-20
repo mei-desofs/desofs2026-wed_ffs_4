@@ -56,128 +56,104 @@
 
 ---
 
-## STRIDE Threat Analysis
+## STRIDE Threat Analysis (Baseado no DFD Nível 1)
 
-### Authentication Threats
+### Authentication Threats (Spoofing & Info Disclosure)
+Foco nas interações com o **AuthService** e o tráfego que cruza a fronteira da **Internet**.
 
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T1 | Brute force login | 4 | 5 | 20 | M1: Rate limiting (5 attempts/min, 20/hour/IP, 15min lockout) |
-| T2 | Weak password policy | 3 | 4 | 12 | M2: Min 12 chars, mixed complexity |
-| T3 | JWT token forgery | 2 | 5 | 10 | M3: HS256 signature + expiration validation |
-| T4 | Session hijacking | 3 | 5 | 15 | M4: HTTPS only, HttpOnly cookies, 24h expiry |
+| ID | Threat                                           | L | I | Score | Mitigation                                                    |
+|----|--------------------------------------------------|---|---|-------|---------------------------------------------------------------|
+| T1 | Brute force/Credential stuffing on `AuthService` | 4 | 5 | 20    | M1: Rate limiting by IP/User, account lockout mechanisms      |
+| T2 | JWT token interception over `Internet`           | 3 | 5 | 15    | M2: Mandatory TLS 1.2+ for all traffic, Secure/HttpOnly flags |
+| T3 | Weak password generation                         | 3 | 4 | 12    | M3: Enforce password complexity (min 12 chars, entropy check) |
 
-### Authorization Threats
+### Authorization Threats (Elevation of Privilege & Info Disclosure)
+Foco nos controlos de acesso entre os papéis (User, Member, Manager, Admin) nos vários serviços.
 
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T5 | Role escalation | 3 | 5 | 15 | M5: Re-validate role from DB on every request |
-| T6 | Unauth project access | 3 | 5 | 15 | M6: Query filters + membership checks |
-| T7 | Unauth task access | 3 | 4 | 12 | M7: Ownership/manager/admin validation |
-| T8 | Missing authz checks | 4 | 4 | 16 | M8: Auth middleware on all endpoints |
+| ID | Threat                                                   | L | I | Score | Mitigation                                                      |
+|----|----------------------------------------------------------|---|---|-------|-----------------------------------------------------------------|
+| T4 | Role escalation to `Admin` or `Manager`                  | 3 | 5 | 15    | M4: Strict server-side RBAC validation from DB on every request |
+| T5 | IDOR (Insecure Direct Object Reference) on `TaskService` | 4 | 4 | 16    | M5: Validate resource ownership/membership against JWT claims   |
+| T6 | Unauthorized project modification via `ProjectService`   | 3 | 5 | 15    | M6: Authorization middleware matching user role to project ID   |
 
-### File Upload Threats
+### File Upload Threats (Tampering, DoS & Info Disclosure)
+Foco no **FileService** e na escrita/leitura no **Filesystem (FileStorage)**.
 
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T9 | Malicious file upload | 4 | 4 | 16 | M9: Whitelist types + MIME check, size limit |
-| T10 | File access bypass | 3 | 5 | 15 | M10: API-only endpoint, DB auth check |
-| T11 | Path traversal | 3 | 4 | 12 | M11: Filename validation, UUID storage |
-| T12 | Oversized upload | 4 | 3 | 12 | M12: 25MB limit, Content-Length check |
+| ID | Threat                                          | L | I | Score | Mitigation                                                                       |
+|----|-------------------------------------------------|---|---|-------|----------------------------------------------------------------------------------|
+| T7 | Malicious executable upload to `FileStorage`    | 4 | 5 | 20    | M7: Strict MIME validation, malware scanning, remove execute permissions on disk |
+| T8 | Storage exhaustion DoS (mass uploads)           | 4 | 4 | 16    | M8: File size limits (e.g., 25MB), user/tenant quota enforcement                 |
+| T9 | Path traversal leading to arbitrary file access | 3 | 4 | 12    | M9: Strip paths from filenames, store files using UUIDs                          |
 
-### Data Access Threats
+### Data Access Threats (Tampering & Info Disclosure)
+Foco na fronteira entre a **API** e a **Database**.
 
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T13 | SQL injection | 4 | 5 | 20 | M13: Parameterized queries only |
-| T14 | Database exposure | 2 | 5 | 10 | M14: Network isolation, no direct access |
+| ID  | Threat                                       | L | I | Score | Mitigation                                                               |
+|-----|----------------------------------------------|---|---|-------|--------------------------------------------------------------------------|
+| T10 | SQL/NoSQL Injection via API services         | 3 | 5 | 15    | M10: Use ORM or strictly parameterized queries everywhere                |
+| T11 | Exposure of PII/Credentials in `Users` table | 2 | 5 | 10    | M11: Strong hashing (Argon2id/Bcrypt) for passwords, encrypt PII at rest |
 
-### Application Threats
+### Application Threats (Tampering & Repudiation)
+Foco nas interações de utilizador com o **CommentService** e transições de estado.
 
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T15 | XSS in comments | 4 | 4 | 16 | M15: HTML entity encoding on output |
-| T16 | Unauthorized comment edit | 3 | 4 | 12 | M16: Author/manager only validation |
-| T17 | Soft-delete visibility | 2 | 3 | 6 | M17: Query filters (WHERE deletedAt IS NULL) |
-| T21 | CSRF attack | 3 | 5 | 15 | M21: Bearer token in Authorization header |
+| ID  | Threat                               | L | I | Score | Mitigation                                                               |
+|-----|--------------------------------------|---|---|-------|--------------------------------------------------------------------------|
+| T12 | Stored XSS via `CommentService`      | 4 | 4 | 16    | M12: Strict input validation and context-aware output encoding           |
+| T13 | Repudiation of critical task changes | 2 | 4 | 8     | M13: Ensure `TaskService` cannot bypass `AuditService` for state changes |
 
-### Logging Threats
+### Logging Threats (Tampering & Repudiation)
+Foco no **AuditService** e na tabela **Audit Logs**.
 
-| ID | Threat | L | I | Score | Mitigation |
-|---|---|---|---|---|---|
-| T18 | Sensitive data in logs | 3 | 4 | 12 | M18: Log scrubbing, no passwords/tokens |
-| T19 | Audit log tampering | 2 | 4 | 8 | M19: Append-only log, restricted access |
-| T20 | Incomplete audit trail | 3 | 3 | 9 | M20: Log all auth/authz/data operations |
+| ID  | Threat                                     | L | I | Score | Mitigation                                                         |
+|-----|--------------------------------------------|---|---|-------|--------------------------------------------------------------------|
+| T14 | Audit log tampering by compromised `Admin` | 2 | 5 | 10    | M14: Use append-only or write-only DB credentials for `Audit Logs` |
+| T15 | Sensitive data leakage in audit events     | 3 | 4 | 12    | M15: Data scrubbing pipeline before writing to `AuditService`      |
 
 ---
 
 ## Risk Assessment Matrix
 
 **Critical Priority (P0) - Score ≥ 15:**
-- T1 (Brute force): 20 - M1 rate limiting
-- T4 (Session hijacking): 15 - M4 HTTPS/expiry
-- T5 (Role escalation): 15 - M5 DB re-validation
-- T6 (Unauth project): 15 - M6 membership checks
-- T8 (Missing authz): 16 - M8 middleware
-- T9 (Malicious upload): 16 - M9 whitelist
-- T10 (File bypass): 15 - M10 API endpoint
-- T13 (SQL injection): 20 - M13 parameterized queries
-- T15 (XSS): 16 - M15 output encoding
-- T21 (CSRF): 15 - M21 Bearer token
+* T1 (Brute force): 20 - M1 rate limiting
+* T7 (Malicious upload): 20 - M7 MIME validation & execution prevention
+* T5 (IDOR on Tasks): 16 - M5 ownership validation
+* T8 (Storage DoS): 16 - M8 file limits & quotas
+* T12 (Stored XSS): 16 - M12 input/output sanitization
+* T2 (JWT interception): 15 - M2 TLS enforcement
+* T4 (Role escalation): 15 - M4 strict RBAC
+* T6 (Unauth project mod): 15 - M6 authz middleware
+* T10 (Injection): 15 - M10 parameterized queries
 
 **High Priority (P1) - Score 12-14:**
-- T2 (Weak password): 12 - M2 complexity rules
-- T7 (Unauth task): 12 - M7 ownership check
-- T11 (Path traversal): 12 - M11 UUID storage
-- T12 (Oversized file): 12 - M12 size limit
-- T16 (Comment edit): 12 - M16 auth check
-- T18 (Logs): 12 - M18 scrubbing
+* T3 (Weak password): 12 - M3 complexity checks
+* T9 (Path traversal): 12 - M9 UUID storage
+* T15 (Log sensitive data): 12 - M15 data scrubbing
 
 **Medium Priority (P2) - Score < 12:**
-- T3 (Token forgery): 10 - M3 signature validation
-- T17 (Soft-delete): 6 - M17 query filters
-- T19 (Log tampering): 8 - M19 access control
-- T20 (Audit incomplete): 9 - M20 logging
+* T11 (DB exposure): 10 - M11 hashing/encryption
+* T14 (Log tampering): 10 - M14 append-only logs
+* T13 (Repudiation of changes): 8 - M13 mandatory audit hooks
 
 ---
 
 ## Threat-to-Mitigation Mapping
 
-**P0 Mitigations Required for Phase 1:**
-- M1: Rate limiting implementation
-- M3: JWT signature validation
-- M4: Token expiration + HTTPS requirement
-- M5: Role re-validation from DB
-- M6: Project membership filters
-- M8: Authorization middleware
-- M9: File type whitelist + MIME validation
-- M10: Authenticated file endpoint
-- M13: Parameterized SQL queries
-- M15: Output encoding
-- M21: Bearer token authentication (CSRF prevention)
+**P0 Mitigations Required for Phase 1 (Core Security):**
+* M1: Implement rate limiting on `AuthService`.
+* M2: Enforce TLS 1.2+ across the Internet boundary.
+* M4, M6: Implement robust role and membership authorization middleware.
+* M5: IDOR protection (validate JWT ownership against Task/Project IDs).
+* M7: File upload MIME validation and secure filesystem permissions.
+* M8: Enforce max file size globally on `FileService`.
+* M10: Parameterize all Database queries.
+* M12: Implement anti-XSS encoding in frontend/API responses.
 
-**P1 Mitigations Required for Phase 1:**
-- M2: Password complexity rules
-- M7: Task access authorization
-- M11: Path traversal prevention
-- M12: File size enforcement
-- M16: Comment authorization
-- M18: Log scrubbing
+**P1 Mitigations Required for Phase 1 (Hygiene & Stability):**
+* M3: Password complexity policies in `AuthService`.
+* M9: UUID-based file naming convention in `FileStorage`.
+* M15: Implement a log scrubber for the `AuditService`.
 
-**P2 Mitigations (Nice-to-have Phase 1):**
-- M17: Soft-delete filtering
-- M19: Audit log protection
-- M20: Comprehensive logging
-
----
-
-## Implementation References
-
-| Mitigation | See Document | Section |
-|---|---|---|
-| M1-M5, M7-M8 | 04_SecurityDesign.md | Authentication & Authorization |
-| M9-M12 | 04_SecurityDesign.md | Secure File Handling |
-| M13, M18 | 04_SecurityDesign.md | Input Validation & Logging |
-| M15 | 04_SecurityDesign.md | Output Encoding (XSS Prevention) |
-| All test cases | 06_SecurityTesting.md | Security Test Strategy |
-| All requirements | 01_Requirements.md | Security Requirements (SR-1 to SR-13) |
+**P2 Mitigations (Phase 2 / Hardening):**
+* M11: Database-level encryption at rest.
+* M13: Comprehensive audit coverage for every CRUD operation.
+* M14: Append-only database user for `Audit Logs`.
