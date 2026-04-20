@@ -7,6 +7,8 @@
 - DFD Level 0: ![](../../Docs/Diagrams/dfd_lvl0.png)
 - DFD Level 1: ![](../../Docs/Diagrams/dfd_lvl1.drawio.png)
 - DFD Level 2 (Authentication): ![](../../Docs/Diagrams/dfd_lvl2_auth.png)
+- DFD Level 2 (Project): ![](../../Docs/Diagrams/dfd_lvl2_project.png)
+### Note: JWT Validation is omitted from this diagram for clarity. It is implicitly invoked on every authenticated request before any process executes.
 
 ---
 
