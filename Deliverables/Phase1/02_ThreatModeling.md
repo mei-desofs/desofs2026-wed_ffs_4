@@ -2,6 +2,12 @@
 
 **Implementation Details:** See 04_SecurityDesign.md for all security implementations
 
+## Threat Modeling Diagrams
+
+- DFD Level 0: ![](../../Docs/Diagrams/dfd_lvl0.png)
+- DFD Level 1: ![](../../Docs/Diagrams/dfd_lvl1.drawio.png)
+- DFD Level 2 (Authentication): ![](../../Docs/Diagrams/dfd_lvl2_auth.png)
+
 ---
 
 ## Risk Score Calculation
@@ -34,6 +40,11 @@
 - Data Access (database queries)
 - File Operations (upload, download, storage)
 - Audit Logging
+
+**Threat Model Inputs:**
+- Assets inventory: [Assets.md](Assets.md)
+- Entry/exit surface: [EntryPoints.md](EntryPoints.md), [ExitPoints.md](ExitPoints.md)
+- Trust assumptions: [TrustLevels.md](TrustLevels.md)
 
 ---
 

@@ -1,5 +1,11 @@
 # Security Design
 
+## Security Diagrams
+
+- Authentication Flow: ![](../../Docs/Diagrams/02_AuthenticationFlow.png)
+- File Upload Security Flow: ![](../../Docs/Diagrams/03_FileUploadFlow.png)
+- RBAC Matrix: ![](../../Docs/Diagrams/07_RBACMatrix.png)
+
 ## Authentication
 
 **Flow:**
