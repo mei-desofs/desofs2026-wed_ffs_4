@@ -1,6 +1,6 @@
-# Teuxdeux — Spring Boot API (Phase 2)
+# Teuxdeux
 
-Teuxdeux is a collaborative task management platform built for teams. This is the Phase 2 implementation: a Spring Boot REST API with JWT authentication and projects management.
+Teuxdeux is a collaborative task management platform built for teams, enabling them to organize work into projects and tasks while allowing for easy communication through comments and file attachments. It supports a hierarchy of user roles — Admins, Managers, and Members — each with appropriate levels of access and control. Security is treated as a foundational priority throughout the platform, ensuring that every user can only see and do what their role permits.
 
 ---
 
@@ -18,44 +18,6 @@ docker-compose up -d
 ```
 
 App starts on `http://localhost:8080`.
-
----
-
-## API Endpoints
-
-### Auth (Public)
-- **Register**: `POST /auth/register`
-  ```bash
-  curl -X POST http://localhost:8080/auth/register \
-    -H "Content-Type: application/json" \
-    -d '{"email":"user@example.com","password":"password123"}'
-  ```
-  Response: `{"id": 1, "email": "user@example.com"}`
-
-- **Login**: `POST /auth/login`
-  ```bash
-  curl -X POST http://localhost:8080/auth/login \
-    -H "Content-Type: application/json" \
-    -d '{"email":"user@example.com","password":"password123"}'
-  ```
-  Response: `{"token": "eyJhbGc..."}`
-
-### Projects (Authenticated)
-- **Create Project**: `POST /api/projects`
-  ```bash
-  TOKEN="<token_from_login>"
-  curl -X POST http://localhost:8080/api/projects \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $TOKEN" \
-    -d '{"name":"My Project","description":"Project description"}'
-  ```
-  Response: `{"id": 1, "name": "My Project", ...}`
-
-- **List Projects**: `GET /api/projects`
-  ```bash
-  curl -X GET http://localhost:8080/api/projects \
-    -H "Authorization: Bearer $TOKEN"
-  ```
 
 ---
 
