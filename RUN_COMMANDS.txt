@@ -1,0 +1,26 @@
+# Quick Start
+
+./run.sh all
+
+# Available modes:
+./run.sh db      # Start only DB
+./run.sh api     # Start only API
+./run.sh smoke   # Show test curl commands
+./run.sh all     # Start DB + API (default)
+
+# Test commands (open another terminal):
+
+# Login as admin
+curl -X POST http://localhost:8080/auth/login -H "Content-Type: application/json" -d '{"email":"admin@example.com","password":"password123"}'
+
+# or login as regular user
+curl -X POST http://localhost:8080/auth/login -H "Content-Type: application/json" -d '{"email":"user@example.com","password":"password123"}'
+
+# Set token from response:
+TOKEN="TOKEN_HERE"
+
+# Create project
+curl -X POST http://localhost:8080/api/projects -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"name":"Test Project","description":"Demo"}'
+
+# List projects
+curl -X GET http://localhost:8080/api/projects -H "Authorization: Bearer $TOKEN"

@@ -4,6 +4,32 @@ Teuxdeux is a collaborative task management platform built for teams, enabling t
 
 ---
 
+## Quick Start
+
+### 1. Start Database (Docker)
+```bash
+docker-compose up -d
+```
+
+### 2. Build & Run
+```bash
+./mvnw clean install
+./mvnw spring-boot:run
+```
+
+App starts on `http://localhost:8080`.
+
+---
+
+## Tech Stack
+- Spring Boot 3.1.4
+- Spring Security + JWT (JJWT)
+- Spring Data JPA
+- PostgreSQL 15
+- Maven
+
+---
+
 ## Team
 
 **Project:** Teuxdeux — Task Management App

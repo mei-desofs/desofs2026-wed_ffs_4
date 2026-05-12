@@ -75,8 +75,8 @@ This sequence gave the team a consistent narrative from intent to verification, 
 | Topic | Document |
 | --- | --- |
 | Requirements (FR/NFR/SR) | [01_Requirements.md](01_Requirements.md) |
-| Threat Modeling (STRIDE + Risk) | [02_ThreatModeling.md](02_ThreatModeling.md) |
 | Secure Architecture | [03_Architecture.md](03_Architecture.md) |
+| Threat Modeling (STRIDE + Risk) | [02_ThreatModeling.md](02_ThreatModeling.md) |
 | Security Design (AuthN/AuthZ/Data/Input/Logging) | [04_SecurityDesign.md](04_SecurityDesign.md) |
 | Security Test Plan + Abuse Cases | [06_SecurityTesting.md](06_SecurityTesting.md) |
 
