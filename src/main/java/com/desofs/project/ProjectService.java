@@ -1,11 +1,10 @@
 package com.desofs.project;
 
-import com.desofs.user.User;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.desofs.user.User;
 
 @Service
 public class ProjectService {
@@ -15,23 +14,34 @@ public class ProjectService {
         this.projectRepository = projectRepository;
     }
 
-    private Long getCurrentUserId() {
-        // For Phase 1: extract email from JWT and resolve to user ID
-        // For now, return a placeholder - will be refined later
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated()) {
-            // TODO: get user from DB using email from token
-            return null;
-        }
-        throw new RuntimeException("Unauthorized");
-    }
-
     public Project createProject(String name, String description, User owner) {
         Project project = new Project(name, description, owner);
         return projectRepository.save(project);
     }
 
+    public void deleteProject(Long projectId, Long ownerId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        if (project.getOwner() == null || project.getOwner().getId() == null || !project.getOwner().getId().equals(ownerId)) {
+            throw new RuntimeException("Forbidden");
+        }
+
+        projectRepository.delete(project);
+    }
+
     public List<Project> getUserProjects(Long userId) {
         return projectRepository.findByOwnerId(userId);
+    }
+
+    public Project getProjectById(Long projectId, Long ownerId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        if (project.getOwner() == null || project.getOwner().getId() == null || !project.getOwner().getId().equals(ownerId)) {
+            throw new RuntimeException("Forbidden");
+        }
+
+        return project;
     }
 }

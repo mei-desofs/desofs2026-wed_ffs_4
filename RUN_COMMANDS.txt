@@ -24,3 +24,8 @@ curl -X POST http://localhost:8080/api/projects -H "Content-Type: application/js
 
 # List projects
 curl -X GET http://localhost:8080/api/projects -H "Authorization: Bearer $TOKEN"
+# Get single project (replace 1 with actual project ID)
+curl -X GET http://localhost:8080/api/projects/1 -H "Authorization: Bearer $TOKEN"
+
+# Delete project
+curl -X DELETE http://localhost:8080/api/projects/1 -H "Authorization: Bearer $TOKEN"
