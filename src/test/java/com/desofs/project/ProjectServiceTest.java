@@ -1,5 +1,8 @@
 package com.desofs.project;
 
+import com.desofs.project.model.Project;
+import com.desofs.project.repository.ProjectRepository;
+import com.desofs.project.service.ProjectService;
 import com.desofs.user.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

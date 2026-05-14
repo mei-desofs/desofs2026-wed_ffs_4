@@ -1,4 +1,4 @@
-package com.desofs.project;
+package com.desofs.project.model;
 
 import com.desofs.user.User;
 import jakarta.persistence.*;

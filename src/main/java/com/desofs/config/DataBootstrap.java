@@ -5,8 +5,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import com.desofs.project.Project;
-import com.desofs.project.ProjectRepository;
+import com.desofs.project.model.Project;
+import com.desofs.project.repository.ProjectRepository;
 import com.desofs.user.User;
 import com.desofs.user.UserRepository;
 

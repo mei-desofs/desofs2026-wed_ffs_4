@@ -22,6 +22,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.desofs.project.model.Project;
+import com.desofs.project.service.ProjectService;
 import com.desofs.user.User;
 import com.desofs.user.UserRepository;
 

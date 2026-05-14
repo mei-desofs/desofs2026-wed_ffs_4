@@ -1,4 +1,4 @@
-package com.desofs.project;
+package com.desofs.project.controller;
 
 import java.util.List;
 import java.util.Map;
@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.desofs.project.model.Project;
+import com.desofs.project.service.ProjectService;
 import com.desofs.user.User;
 import com.desofs.user.UserRepository;
 
