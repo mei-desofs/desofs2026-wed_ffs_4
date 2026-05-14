@@ -7,6 +7,10 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
 
 server:
   port: 8080
@@ -14,3 +18,14 @@ server:
 jwt:
   secret: change_this_to_a_long_random_secret_for_dev_purposes_only
   expiration-ms: 900000 # 15 minutes
+
+app:
+  attachments:
+    storage-dir: uploads/attachments
+    max-file-size: 25MB
+    allowed-extensions:
+      - jpg
+      - jpeg
+      - png
+      - webp
+      - pdf
