@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -154,6 +155,59 @@ class ProjectControllerIT {
         when(projectService.getProjectById(5L, owner)).thenThrow(new RuntimeException("Forbidden"));
 
         mockMvc.perform(get("/api/projects/5"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@example.com", roles = { "ADMIN" })
+    void updateProjectShouldAllowAdmin() throws Exception {
+        User admin = new User();
+        admin.setId(1L);
+        admin.setEmail("admin@example.com");
+        admin.setRole("ADMIN");
+
+        Project updated = new Project("Updated", "Updated desc", admin);
+        updated.setId(10L);
+
+        when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(admin));
+        when(projectService.updateProject(10L, admin, "Updated", "Updated desc")).thenReturn(updated);
+
+        mockMvc.perform(put("/api/projects/10")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Updated\",\"description\":\"Updated desc\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(10L))
+                .andExpect(jsonPath("$.name").value("Updated"))
+                .andExpect(jsonPath("$.description").value("Updated desc"));
+    }
+
+    @Test
+    @WithMockUser(username = "manager@example.com", roles = { "MANAGER" })
+    void updateProjectShouldAllowManager() throws Exception {
+        User manager = new User();
+        manager.setId(2L);
+        manager.setEmail("manager@example.com");
+        manager.setRole("MANAGER");
+
+        Project updated = new Project("Updated", "Updated desc", manager);
+        updated.setId(11L);
+
+        when(userRepository.findByEmail("manager@example.com")).thenReturn(Optional.of(manager));
+        when(projectService.updateProject(11L, manager, "Updated", "Updated desc")).thenReturn(updated);
+
+        mockMvc.perform(put("/api/projects/11")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Updated\",\"description\":\"Updated desc\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(11L));
+    }
+
+    @Test
+    @WithMockUser(username = "user@example.com", roles = { "USER" })
+    void updateProjectShouldRejectUserRole() throws Exception {
+        mockMvc.perform(put("/api/projects/12")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Updated\",\"description\":\"Updated desc\"}"))
                 .andExpect(status().isForbidden());
     }
 

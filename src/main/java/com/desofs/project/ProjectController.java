@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -75,6 +76,28 @@ public class ProjectController {
             String email = getCurrentUserEmail();
             User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
             Project project = projectService.getProjectById(id, user);
+            return ResponseEntity.ok(Map.of(
+                    "id", project.getId(),
+                    "name", project.getName(),
+                    "description", project.getDescription()
+            ));
+        } catch (RuntimeException ex) {
+            if ("Project not found".equals(ex.getMessage())) {
+                return ResponseEntity.status(404).body(Map.of("error", ex.getMessage()));
+            }
+            if ("Forbidden".equals(ex.getMessage())) {
+                return ResponseEntity.status(403).body(Map.of("error", ex.getMessage()));
+            }
+            return ResponseEntity.status(400).body(Map.of("error", ex.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateProject(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        try {
+            String email = getCurrentUserEmail();
+            User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+            Project project = projectService.updateProject(id, user, body.get("name"), body.get("description"));
             return ResponseEntity.ok(Map.of(
                     "id", project.getId(),
                     "name", project.getName(),

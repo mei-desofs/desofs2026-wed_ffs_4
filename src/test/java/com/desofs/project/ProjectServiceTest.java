@@ -186,4 +186,92 @@ class ProjectServiceTest {
         RuntimeException ex = assertThrows(RuntimeException.class, () -> projectService.getProjectById(999L, admin));
         assertTrue(ex.getMessage().contains("Project not found"));
     }
+
+    @Test
+    void updateProjectShouldAllowAdmin() {
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole("ADMIN");
+
+        Project project = new Project("Old", "Old desc", admin);
+        project.setId(20L);
+
+        when(projectRepository.findById(20L)).thenReturn(java.util.Optional.of(project));
+        when(projectRepository.save(project)).thenReturn(project);
+
+        Project result = projectService.updateProject(20L, admin, "New", "New desc");
+
+        assertEquals("New", result.getName());
+        assertEquals("New desc", result.getDescription());
+        verify(projectRepository).save(project);
+    }
+
+    @Test
+    void updateProjectShouldAllowManagerWhenMember() {
+        User manager = new User();
+        manager.setId(2L);
+        manager.setRole("MANAGER");
+
+        Project project = new Project("Old", "Old desc", manager);
+        project.setId(21L);
+        project.addMember(manager);
+
+        when(projectRepository.findById(21L)).thenReturn(java.util.Optional.of(project));
+        when(projectRepository.save(project)).thenReturn(project);
+
+        Project result = projectService.updateProject(21L, manager, "New", "New desc");
+
+        assertEquals("New", result.getName());
+        assertEquals("New desc", result.getDescription());
+        verify(projectRepository).save(project);
+    }
+
+    @Test
+    void updateProjectShouldRejectManagerWhenNotMember() {
+        User manager = new User();
+        manager.setId(2L);
+        manager.setRole("MANAGER");
+
+        User adminOwner = new User();
+        adminOwner.setId(1L);
+        adminOwner.setRole("ADMIN");
+
+        Project project = new Project("Old", "Old desc", adminOwner);
+        project.setId(22L);
+
+        when(projectRepository.findById(22L)).thenReturn(java.util.Optional.of(project));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> projectService.updateProject(22L, manager, "New", "New desc"));
+        assertTrue(ex.getMessage().contains("Forbidden"));
+    }
+
+    @Test
+    void updateProjectShouldRejectUserRole() {
+        User user = new User();
+        user.setId(3L);
+        user.setRole("USER");
+
+        Project project = new Project("Old", "Old desc", user);
+        project.setId(23L);
+
+        when(projectRepository.findById(23L)).thenReturn(java.util.Optional.of(project));
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> projectService.updateProject(23L, user, "New", "New desc"));
+        assertTrue(ex.getMessage().contains("Forbidden"));
+    }
+
+    @Test
+    void updateProjectShouldThrowWhenNotFound() {
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole("ADMIN");
+
+        when(projectRepository.findById(404L)).thenReturn(java.util.Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> projectService.updateProject(404L, admin, "New", "New desc"));
+        assertTrue(ex.getMessage().contains("Project not found"));
+    }
 }

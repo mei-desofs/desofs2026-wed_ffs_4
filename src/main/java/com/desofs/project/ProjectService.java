@@ -59,4 +59,27 @@ public class ProjectService {
         throw new RuntimeException("Forbidden");
 
     }
+
+    public Project updateProject(Long projectId, User user, String name, String description) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        if ("ADMIN".equals(user.getRole())) {
+            project.setName(name);
+            project.setDescription(description);
+            return projectRepository.save(project);
+        }
+
+        if ("MANAGER".equals(user.getRole())) {
+            if (project.getMembers() != null && project.getMembers().stream()
+                    .anyMatch(member -> member.getId() != null && member.getId().equals(user.getId()))) {
+                project.setName(name);
+                project.setDescription(description);
+                return projectRepository.save(project);
+            }
+            throw new RuntimeException("Forbidden");
+        }
+
+        throw new RuntimeException("Forbidden");
+    }
 }
