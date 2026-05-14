@@ -2,6 +2,8 @@ package com.desofs.project;
 
 import com.desofs.user.User;
 import jakarta.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "projects")
@@ -20,6 +22,14 @@ public class Project {
     @JoinColumn(name = "owner_id")
     private User owner;
 
+    @ManyToMany
+    @JoinTable(
+        name = "project_members",
+        joinColumns = @JoinColumn(name = "project_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> members = new HashSet<>();
+
     public Project() {}
 
     public Project(String name, String description, User owner) {
@@ -36,4 +46,7 @@ public class Project {
     public void setDescription(String description) { this.description = description; }
     public User getOwner() { return owner; }
     public void setOwner(User owner) { this.owner = owner; }
+    public Set<User> getMembers() { return members; }
+    public void setMembers(Set<User> members) { this.members = members; }
+    public void addMember(User member) { this.members.add(member); }
 }

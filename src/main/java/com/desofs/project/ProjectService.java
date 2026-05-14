@@ -30,18 +30,33 @@ public class ProjectService {
         projectRepository.delete(project);
     }
 
-    public List<Project> getUserProjects(Long userId) {
-        return projectRepository.findByOwnerId(userId);
+    public List<Project> getUserProjects(User user) {
+        if ("ADMIN".equals(user.getRole())) {
+            return projectRepository.findAll();
+        }
+        if ("MANAGER".equals(user.getRole()) || "USER".equals(user.getRole())) {
+            return projectRepository.findByMembersId(user.getId());
+        }
+        throw new RuntimeException("Forbidden");
     }
 
-    public Project getProjectById(Long projectId, Long ownerId) {
+    public Project getProjectById(Long projectId, User user) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
-        if (project.getOwner() == null || project.getOwner().getId() == null || !project.getOwner().getId().equals(ownerId)) {
+        if ("ADMIN".equals(user.getRole())) {
+            return project;
+        }
+
+        if ("MANAGER".equals(user.getRole()) || "USER".equals(user.getRole())) {
+            if (project.getMembers() != null && project.getMembers().stream()
+                    .anyMatch(member -> member.getId() != null && member.getId().equals(user.getId()))) {
+                return project;
+            }
             throw new RuntimeException("Forbidden");
         }
 
-        return project;
+        throw new RuntimeException("Forbidden");
+
     }
 }

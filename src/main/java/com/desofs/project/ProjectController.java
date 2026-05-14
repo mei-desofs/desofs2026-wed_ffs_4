@@ -21,12 +21,10 @@ import com.desofs.user.UserRepository;
 @RequestMapping("/api/projects")
 public class ProjectController {
     private final ProjectService projectService;
-    private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
 
-    public ProjectController(ProjectService projectService, ProjectRepository projectRepository, UserRepository userRepository) {
+    public ProjectController(ProjectService projectService, UserRepository userRepository) {
         this.projectService = projectService;
-        this.projectRepository = projectRepository;
         this.userRepository = userRepository;
     }
 
@@ -43,6 +41,11 @@ public class ProjectController {
         try {
             String email = getCurrentUserEmail();
             User owner = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+            if (!"ADMIN".equals(owner.getRole())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
+            }
+
             Project project = projectService.createProject(body.get("name"), body.get("description"), owner);
             return ResponseEntity.status(201).body(Map.of(
                     "id", project.getId(),
@@ -59,7 +62,7 @@ public class ProjectController {
         try {
             String email = getCurrentUserEmail();
             User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-            List<Project> projects = projectService.getUserProjects(user.getId());
+            List<Project> projects = projectService.getUserProjects(user);
             return ResponseEntity.ok(projects);
         } catch (Exception ex) {
             return ResponseEntity.status(400).body(Map.of("error", ex.getMessage()));
@@ -71,7 +74,7 @@ public class ProjectController {
         try {
             String email = getCurrentUserEmail();
             User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-            Project project = projectService.getProjectById(id, user.getId());
+            Project project = projectService.getProjectById(id, user);
             return ResponseEntity.ok(Map.of(
                     "id", project.getId(),
                     "name", project.getName(),

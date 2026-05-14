@@ -3,6 +3,7 @@ package com.desofs.project;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -23,6 +25,7 @@ import com.desofs.user.User;
 import com.desofs.user.UserRepository;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
 class ProjectControllerIT {
 
@@ -36,16 +39,17 @@ class ProjectControllerIT {
     private UserRepository userRepository;
 
     @Test
-    @WithMockUser(username = "user@example.com")
+    @WithMockUser(username = "admin@example.com", roles = { "ADMIN" })
     void createProjectShouldReturnCreatedProject() throws Exception {
         User owner = new User();
         owner.setId(1L);
-        owner.setEmail("user@example.com");
+        owner.setEmail("admin@example.com");
+        owner.setRole("ADMIN");
 
         Project project = new Project("Project 1", "Description", owner);
         project.setId(10L);
 
-        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(owner));
+        when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(owner));
         when(projectService.createProject("Project 1", "Description", owner)).thenReturn(project);
 
         mockMvc.perform(post("/api/projects")
@@ -58,11 +62,21 @@ class ProjectControllerIT {
     }
 
     @Test
+    @WithMockUser(username = "user@example.com", roles = { "USER" })
+    void createProjectShouldRejectUserRole() throws Exception {
+        mockMvc.perform(post("/api/projects")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Project 1\",\"description\":\"Description\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @WithMockUser(username = "user@example.com")
     void listProjectsShouldReturnUserProjects() throws Exception {
         User owner = new User();
         owner.setId(1L);
         owner.setEmail("user@example.com");
+        owner.setRole("USER");
 
         Project p1 = new Project("Project A", "Description A", owner);
         p1.setId(1L);
@@ -70,7 +84,7 @@ class ProjectControllerIT {
         p2.setId(2L);
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(owner));
-        when(projectService.getUserProjects(1L)).thenReturn(List.of(p1, p2));
+        when(projectService.getUserProjects(any(User.class))).thenReturn(List.of(p1, p2));
 
         mockMvc.perform(get("/api/projects"))
                 .andExpect(status().isOk())
@@ -84,6 +98,7 @@ class ProjectControllerIT {
         User owner = new User();
         owner.setId(1L);
         owner.setEmail("user@example.com");
+        owner.setRole("USER");
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(owner));
         doNothing().when(projectService).deleteProject(10L, 1L);
@@ -103,7 +118,7 @@ class ProjectControllerIT {
         project.setId(5L);
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(owner));
-        when(projectService.getProjectById(5L, 1L)).thenReturn(project);
+        when(projectService.getProjectById(5L, owner)).thenReturn(project);
 
         mockMvc.perform(get("/api/projects/5"))
                 .andExpect(status().isOk())
@@ -118,9 +133,10 @@ class ProjectControllerIT {
         User owner = new User();
         owner.setId(1L);
         owner.setEmail("user@example.com");
+        owner.setRole("USER");
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(owner));
-        when(projectService.getProjectById(999L, 1L)).thenThrow(new RuntimeException("Project not found"));
+        when(projectService.getProjectById(999L, owner)).thenThrow(new RuntimeException("Project not found"));
 
         mockMvc.perform(get("/api/projects/999"))
                 .andExpect(status().isNotFound());
@@ -132,9 +148,10 @@ class ProjectControllerIT {
         User owner = new User();
         owner.setId(1L);
         owner.setEmail("user@example.com");
+        owner.setRole("USER");
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(owner));
-        when(projectService.getProjectById(5L, 1L)).thenThrow(new RuntimeException("Forbidden"));
+        when(projectService.getProjectById(5L, owner)).thenThrow(new RuntimeException("Forbidden"));
 
         mockMvc.perform(get("/api/projects/5"))
                 .andExpect(status().isForbidden());
