@@ -39,14 +39,9 @@ public class TaskResponse {
         return r;
     }
 
-    public UUID getId() { return id; }
     public Long getProjectId() { return projectId; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
     public TaskStatus getStatus() { return status; }
     public Long getAssigneeId() { return assigneeId; }
-    public Long getCreatedBy() { return createdBy; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }
-
