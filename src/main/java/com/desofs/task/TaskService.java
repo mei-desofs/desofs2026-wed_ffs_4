@@ -1,6 +1,6 @@
 package com.desofs.task;
 
-import com.desofs.project.ProjectRepository;
+import com.desofs.project.repository.ProjectRepository;
 import com.desofs.task.dto.AssignTaskRequest;
 import com.desofs.task.dto.ChangeTaskStatusRequest;
 import com.desofs.task.dto.CreateTaskRequest;
