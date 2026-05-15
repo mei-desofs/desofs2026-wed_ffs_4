@@ -35,7 +35,7 @@ jobs:
         run: mvn -B clean test
 
       - name: Dependency scan
-        run: mvn -B -DskipTests -DdataDirectory=.dependency-check-data org.owasp:dependency-check-maven:check
+        run: mvn -B -DskipTests -DdataDirectory=.dependency-check-data -DnvdApiKey=${{ secrets.NVD_API_KEY }} org.owasp:dependency-check-maven:check
 
       - name: Static analysis
         run: mvn -B -DskipTests com.github.spotbugs:spotbugs-maven-plugin:check
