@@ -212,12 +212,15 @@ class TaskControllerTest {
     @DisplayName("PATCH changeTaskStatus")
     class ChangeTaskStatus {
 
+        @BeforeEach
+        void auth() { setAuthenticatedUser(USER_EMAIL); }
+
         @Test
         @DisplayName("200 OK with updated status")
         void success_returns200() {
             ChangeTaskStatusRequest req = new ChangeTaskStatusRequest();
             req.setStatus(TaskStatus.IN_PROGRESS);
-            when(taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req)).thenReturn(dummyResponse());
+            when(taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, USER_EMAIL)).thenReturn(dummyResponse());
 
             ResponseEntity<?> resp = controller.changeTaskStatus(PROJECT_ID, TASK_ID, req);
 
@@ -229,7 +232,7 @@ class TaskControllerTest {
         void invalidTransition_returns400() {
             ChangeTaskStatusRequest req = new ChangeTaskStatusRequest();
             req.setStatus(TaskStatus.DONE);
-            when(taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req))
+            when(taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, USER_EMAIL))
                     .thenThrow(new IllegalArgumentException("Invalid status transition"));
 
             ResponseEntity<?> resp = controller.changeTaskStatus(PROJECT_ID, TASK_ID, req);
@@ -274,12 +277,15 @@ class TaskControllerTest {
     @DisplayName("PATCH assignTask")
     class AssignTask {
 
+        @BeforeEach
+        void auth() { setAuthenticatedUser(USER_EMAIL); }
+
         @Test
         @DisplayName("200 OK when task is assigned")
         void success_returns200() {
             AssignTaskRequest req = new AssignTaskRequest();
             req.setAssigneeId(5L);
-            when(taskService.assignTask(PROJECT_ID, TASK_ID, req)).thenReturn(dummyResponse());
+            when(taskService.assignTask(PROJECT_ID, TASK_ID, req, USER_EMAIL)).thenReturn(dummyResponse());
 
             ResponseEntity<?> resp = controller.assignTask(PROJECT_ID, TASK_ID, req);
 
@@ -291,7 +297,7 @@ class TaskControllerTest {
         void assigneeNotFound_returns400() {
             AssignTaskRequest req = new AssignTaskRequest();
             req.setAssigneeId(99L);
-            when(taskService.assignTask(PROJECT_ID, TASK_ID, req))
+            when(taskService.assignTask(PROJECT_ID, TASK_ID, req, USER_EMAIL))
                     .thenThrow(new IllegalArgumentException("User not found: 99"));
 
             ResponseEntity<?> resp = controller.assignTask(PROJECT_ID, TASK_ID, req);
