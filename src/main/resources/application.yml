@@ -19,6 +19,9 @@ jwt:
   secret: change_this_to_a_long_random_secret_for_dev_purposes_only
   expiration-ms: 900000 # 15 minutes
 
+  # 7 days for refresh tokens
+  refresh-expiration-ms: 604800000
+
 app:
   attachments:
     storage-dir: uploads/attachments

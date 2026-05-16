@@ -20,6 +20,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.any;
+
+import java.util.Map;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -54,15 +60,29 @@ class AuthControllerIT {
                 .andExpect(jsonPath("$.email").value("user@example.com"));
     }
 
+
     @Test
-    void loginShouldReturnJwtToken() throws Exception {
-        when(authService.login("user@example.com", "password123")).thenReturn("jwt-token");
+    void loginShouldReturnJwtAndRefreshToken() throws Exception {
+        when(authService.login("user@example.com", "password123")).thenReturn(Map.of("token", "jwt-token", "refreshToken", "refresh-token"));
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"user@example.com\",\"password\":\"password123\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("jwt-token"));
+                .andExpect(jsonPath("$.token").value("jwt-token"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-token"));
+    }
+
+    @Test
+    void refreshShouldReturnNewTokens() throws Exception {
+        when(authService.refresh("refresh-token")).thenReturn(Map.of("token", "new-jwt", "refreshToken", "new-refresh"));
+
+        mockMvc.perform(post("/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"refresh-token\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("new-jwt"))
+                .andExpect(jsonPath("$.refreshToken").value("new-refresh"));
     }
 
     @Test
@@ -79,13 +99,14 @@ class AuthControllerIT {
     @Test
     void logoutShouldBlacklistToken() throws Exception {
         @SuppressWarnings("unchecked")
-        Jws<Claims> jws = mock(Jws.class);
-        Claims claims = mock(Claims.class);
+        Jws<Claims> jws = mock(Jws.class, withSettings().defaultAnswer(CALLS_REAL_METHODS));
+        Claims claims = mock(Claims.class, withSettings().defaultAnswer(CALLS_REAL_METHODS));
+        java.util.Date exp = new java.util.Date(System.currentTimeMillis() + 10000);
 
         when(jwtUtil.validate("jwt-token")).thenReturn(jws);
         when(jws.getBody()).thenReturn(claims);
-        when(claims.getExpiration()).thenReturn(new java.util.Date());
-        doNothing().when(tokenBlacklistService).blacklist("jwt-token", claims.getExpiration().toInstant());
+        when(claims.getExpiration()).thenReturn(exp);
+        doNothing().when(tokenBlacklistService).blacklist(eq("jwt-token"), any());
 
         mockMvc.perform(post("/auth/logout")
                         .header("Authorization", "Bearer jwt-token"))

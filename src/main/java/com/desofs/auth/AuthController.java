@@ -41,8 +41,19 @@ public class AuthController {
         try {
             String email = body.get("email");
             String password = body.get("password");
-            String token = authService.login(email, password);
-            return ResponseEntity.ok(Map.of("token", token));
+            Map<String, String> tokens = authService.login(email, password);
+            return ResponseEntity.ok(tokens);
+        } catch (Exception ex) {
+            return ResponseEntity.status(401).body(Map.of("error", ex.getMessage()));
+        }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
+        try {
+            String refreshToken = body.get("refreshToken");
+            Map<String, String> tokens = authService.refresh(refreshToken);
+            return ResponseEntity.ok(tokens);
         } catch (Exception ex) {
             return ResponseEntity.status(401).body(Map.of("error", ex.getMessage()));
         }

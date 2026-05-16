@@ -42,7 +42,7 @@ class ProjectMemberServiceTest {
         Project project = new Project("Project", "Desc", admin);
         project.setId(100L);
 
-        when(projectRepository.findById(100L)).thenReturn(Optional.of(project));
+        when(projectRepository.findByIdAndDeletedFalse(100L)).thenReturn(Optional.of(project));
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(member));
         when(projectRepository.save(project)).thenReturn(project);
 
@@ -65,7 +65,7 @@ class ProjectMemberServiceTest {
         project.setId(200L);
         project.addMember(manager);
 
-        when(projectRepository.findById(200L)).thenReturn(Optional.of(project));
+        when(projectRepository.findByIdAndDeletedFalse(200L)).thenReturn(Optional.of(project));
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(member));
         when(projectRepository.save(project)).thenReturn(project);
 
@@ -83,7 +83,7 @@ class ProjectMemberServiceTest {
         Project project = new Project("Project", "Desc", manager);
         project.setId(300L);
 
-        when(projectRepository.findById(300L)).thenReturn(Optional.of(project));
+        when(projectRepository.findByIdAndDeletedFalse(300L)).thenReturn(Optional.of(project));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> projectMemberService.addMember(300L, manager, "user@example.com"));
@@ -103,7 +103,7 @@ class ProjectMemberServiceTest {
         project.setId(400L);
         project.addMember(member);
 
-        when(projectRepository.findById(400L)).thenReturn(Optional.of(project));
+        when(projectRepository.findByIdAndDeletedFalse(400L)).thenReturn(Optional.of(project));
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(member));
         when(projectRepository.save(project)).thenReturn(project);
 
