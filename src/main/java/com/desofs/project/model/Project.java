@@ -18,6 +18,9 @@ public class Project {
     @Column(length = 2000)
     private String description;
 
+    @Column(nullable = false)
+    private boolean deleted = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private User owner;
@@ -44,6 +47,8 @@ public class Project {
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public boolean isDeleted() { return deleted; }
+    public void setDeleted(boolean deleted) { this.deleted = deleted; }
     public User getOwner() { return owner; }
     public void setOwner(User owner) { this.owner = owner; }
     public Set<User> getMembers() { return members; }

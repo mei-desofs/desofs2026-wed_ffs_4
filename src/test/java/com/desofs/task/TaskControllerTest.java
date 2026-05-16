@@ -36,6 +36,7 @@ import static org.mockito.Mockito.*;
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TaskController – unit tests")
+@SuppressWarnings("unused")
 class TaskControllerTest {
 
     @Mock
@@ -85,8 +86,9 @@ class TaskControllerTest {
             CreateTaskRequest req = new CreateTaskRequest();
             req.setTitle("title");
 
-            assertThrows(IllegalStateException.class,
-                    () -> controller.createTask(PROJECT_ID, req));
+            IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> controller.createTask(PROJECT_ID, req));
+            assertEquals("No authenticated user in context", ex.getMessage());
         }
 
         @Test
@@ -99,8 +101,9 @@ class TaskControllerTest {
             CreateTaskRequest req = new CreateTaskRequest();
             req.setTitle("title");
 
-            assertThrows(IllegalStateException.class,
+            IllegalStateException ex = assertThrows(IllegalStateException.class,
                     () -> controller.createTask(PROJECT_ID, req));
+            assertEquals("No authenticated user in context", ex.getMessage());
         }
     }
 

@@ -33,6 +33,7 @@ import static org.mockito.Mockito.*;
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TaskService – unit tests")
+@SuppressWarnings("unused")
 class TaskServiceTest {
 
     @Mock private TaskRepository    taskRepository;
@@ -53,6 +54,7 @@ class TaskServiceTest {
     private User caller;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         caller = new User();
         caller.setId(CALLER_ID);
@@ -74,11 +76,13 @@ class TaskServiceTest {
     // ════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("FR-10 createTask")
+    @SuppressWarnings("unused")
     class CreateTask {
 
         private CreateTaskRequest req;
 
         @BeforeEach
+        @SuppressWarnings("unused")
         void initReq() {
             req = new CreateTaskRequest();
             req.setTitle("Do something");
@@ -88,8 +92,9 @@ class TaskServiceTest {
         @DisplayName("null title throws IllegalArgumentException")
         void nullTitle_throws() {
             req.setTitle(null);
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+            assertNotNull(ex.getMessage());
             verify(taskRepository, never()).save(any());
         }
 
@@ -97,8 +102,9 @@ class TaskServiceTest {
         @DisplayName("blank title throws IllegalArgumentException")
         void blankTitle_throws() {
             req.setTitle("   ");
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+            assertNotNull(ex.getMessage());
             verify(taskRepository, never()).save(any());
         }
 
@@ -106,8 +112,9 @@ class TaskServiceTest {
         @DisplayName("title exceeding 255 chars throws IllegalArgumentException")
         void titleTooLong_throws() {
             req.setTitle("x".repeat(256));
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+            assertNotNull(ex.getMessage());
             verify(taskRepository, never()).save(any());
         }
 
@@ -115,8 +122,9 @@ class TaskServiceTest {
         @DisplayName("project not found throws IllegalArgumentException")
         void projectNotFound_throws() {
             when(projectRepository.existsById(PROJECT_ID)).thenReturn(false);
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+            assertNotNull(ex.getMessage());
             verify(taskRepository, never()).save(any());
         }
 
@@ -125,8 +133,9 @@ class TaskServiceTest {
         void callerNotFound_throws() {
             when(projectRepository.existsById(PROJECT_ID)).thenReturn(true);
             when(userRepository.findByEmail(CALLER_EMAIL)).thenReturn(Optional.empty());
-            assertThrows(IllegalStateException.class,
-                    () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+            IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+            assertNotNull(ex.getMessage());
             verify(taskRepository, never()).save(any());
         }
 
@@ -169,14 +178,16 @@ class TaskServiceTest {
     // ════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("FR-11 listTasksByProject")
+    @SuppressWarnings("unused")
     class ListTasks {
 
         @Test
         @DisplayName("project not found throws IllegalArgumentException")
         void projectNotFound_throws() {
             when(projectRepository.existsById(PROJECT_ID)).thenReturn(false);
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.listTasksByProject(PROJECT_ID));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.listTasksByProject(PROJECT_ID));
+            assertNotNull(ex.getMessage());
         }
 
         @Test
@@ -216,14 +227,16 @@ class TaskServiceTest {
     // ════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("FR-12 updateTask")
+    @SuppressWarnings("unused")
     class UpdateTask {
 
         @Test
         @DisplayName("task not found throws IllegalArgumentException")
         void taskNotFound_throws() {
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.empty());
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.updateTask(PROJECT_ID, TASK_ID, new UpdateTaskRequest()));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.updateTask(PROJECT_ID, TASK_ID, new UpdateTaskRequest()));
+            assertNotNull(ex.getMessage());
         }
 
         @Test
@@ -232,8 +245,9 @@ class TaskServiceTest {
             Task task = buildTask(); // belongs to PROJECT_ID
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.of(task));
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.updateTask(OTHER_PROJECT, TASK_ID, new UpdateTaskRequest()));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.updateTask(OTHER_PROJECT, TASK_ID, new UpdateTaskRequest()));
+            assertNotNull(ex.getMessage());
         }
 
         @Test
@@ -244,8 +258,9 @@ class TaskServiceTest {
 
             UpdateTaskRequest req = new UpdateTaskRequest();
             req.setTitle("  ");
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.updateTask(PROJECT_ID, TASK_ID, req));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.updateTask(PROJECT_ID, TASK_ID, req));
+            assertNotNull(ex.getMessage());
         }
 
         @Test
@@ -256,8 +271,9 @@ class TaskServiceTest {
 
             UpdateTaskRequest req = new UpdateTaskRequest();
             req.setTitle("y".repeat(256));
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.updateTask(PROJECT_ID, TASK_ID, req));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.updateTask(PROJECT_ID, TASK_ID, req));
+            assertNotNull(ex.getMessage());
         }
 
         @Test
@@ -326,6 +342,7 @@ class TaskServiceTest {
     // ════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("FR-13 changeTaskStatus")
+    @SuppressWarnings("unused")
     class ChangeTaskStatus {
 
         @Test
@@ -333,8 +350,9 @@ class TaskServiceTest {
         void nullStatus_throws() {
             ChangeTaskStatusRequest req = new ChangeTaskStatusRequest();
             req.setStatus(null);
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req));
+            assertNotNull(ex.getMessage());
         }
 
         @Test
@@ -343,8 +361,9 @@ class TaskServiceTest {
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.empty());
             ChangeTaskStatusRequest req = new ChangeTaskStatusRequest();
             req.setStatus(TaskStatus.IN_PROGRESS);
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req));
+            assertNotNull(ex.getMessage());
         }
 
         @Test
@@ -354,8 +373,9 @@ class TaskServiceTest {
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.of(task));
             ChangeTaskStatusRequest req = new ChangeTaskStatusRequest();
             req.setStatus(TaskStatus.IN_PROGRESS);
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.changeTaskStatus(OTHER_PROJECT, TASK_ID, req));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.changeTaskStatus(OTHER_PROJECT, TASK_ID, req));
+            assertNotNull(ex.getMessage());
         }
 
         @Test
@@ -366,8 +386,9 @@ class TaskServiceTest {
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.of(task));
             ChangeTaskStatusRequest req = new ChangeTaskStatusRequest();
             req.setStatus(TaskStatus.DONE);
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req));
+            assertNotNull(ex.getMessage());
         }
 
         @Test
@@ -409,14 +430,16 @@ class TaskServiceTest {
     // ════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("FR-14 deleteTask")
+    @SuppressWarnings("unused")
     class DeleteTask {
 
         @Test
         @DisplayName("task not found throws IllegalArgumentException")
         void taskNotFound_throws() {
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.empty());
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.deleteTask(PROJECT_ID, TASK_ID));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.deleteTask(PROJECT_ID, TASK_ID));
+            assertNotNull(ex.getMessage());
         }
 
         @Test
@@ -424,8 +447,9 @@ class TaskServiceTest {
         void wrongProject_throws() {
             Task task = buildTask();
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.of(task));
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.deleteTask(OTHER_PROJECT, TASK_ID));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.deleteTask(OTHER_PROJECT, TASK_ID));
+            assertNotNull(ex.getMessage());
         }
 
         @Test
@@ -446,6 +470,7 @@ class TaskServiceTest {
     // ════════════════════════════════════════════════════════════════════════
     @Nested
     @DisplayName("FR-15 assignTask")
+    @SuppressWarnings("unused")
     class AssignTask {
 
         @Test
@@ -454,8 +479,9 @@ class TaskServiceTest {
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.empty());
             AssignTaskRequest req = new AssignTaskRequest();
             req.setAssigneeId(5L);
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.assignTask(PROJECT_ID, TASK_ID, req));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.assignTask(PROJECT_ID, TASK_ID, req));
+            assertNotNull(ex.getMessage());
         }
 
         @Test
@@ -465,8 +491,9 @@ class TaskServiceTest {
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.of(task));
             AssignTaskRequest req = new AssignTaskRequest();
             req.setAssigneeId(5L);
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.assignTask(OTHER_PROJECT, TASK_ID, req));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.assignTask(OTHER_PROJECT, TASK_ID, req));
+            assertNotNull(ex.getMessage());
         }
 
         @Test
@@ -478,8 +505,9 @@ class TaskServiceTest {
 
             AssignTaskRequest req = new AssignTaskRequest();
             req.setAssigneeId(5L);
-            assertThrows(IllegalArgumentException.class,
-                    () -> taskService.assignTask(PROJECT_ID, TASK_ID, req));
+            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> taskService.assignTask(PROJECT_ID, TASK_ID, req));
+            assertNotNull(ex.getMessage());
         }
 
         @Test

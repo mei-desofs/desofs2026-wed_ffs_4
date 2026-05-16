@@ -121,7 +121,7 @@ public class ProjectController {
         try {
             String email = getCurrentUserEmail();
             User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-            projectService.deleteProject(id, user.getId());
+            projectService.deleteProject(id, user);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException ex) {
             if ("Project not found".equals(ex.getMessage())) {
