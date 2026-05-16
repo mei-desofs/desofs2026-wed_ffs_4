@@ -1,11 +1,15 @@
 package com.desofs.auth;
 
-import com.desofs.user.User;
-import com.desofs.security.JwtUtil;
-import com.desofs.security.TokenBlacklistService;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,19 +17,16 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.withSettings;
-import static org.mockito.Mockito.CALLS_REAL_METHODS;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.any;
 
-import java.util.Map;
+import com.desofs.security.JwtUtil;
+import com.desofs.security.TokenBlacklistService;
+import com.desofs.user.User;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 
 @SpringBootTest
 @ActiveProfiles("test")

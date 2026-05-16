@@ -1,12 +1,14 @@
 package com.desofs.auth;
 
-import com.desofs.user.User;
-import com.desofs.user.UserRepository;
-import com.desofs.security.JwtUtil;
 import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import com.desofs.security.JwtUtil;
+import com.desofs.user.User;
+import com.desofs.user.UserRepository;
 
 @Service
 public class AuthService {
