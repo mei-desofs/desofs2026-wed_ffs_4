@@ -51,7 +51,7 @@ public class ProjectMemberService {
             throw new RuntimeException("Project members not initialized");
         }
 
-        project.getMembers().removeIf(m -> m.getId() != null && m.getId().equals(member.getId()));
+        project.removeMember(member);
         return projectRepository.save(project);
     }
 
