@@ -63,14 +63,14 @@ class ProjectServiceTest {
         p2.setId(2L);
         p2.setName("Project B");
 
-        when(projectRepository.findByMembersId(5L)).thenReturn(List.of(p1, p2));
+        when(projectRepository.findByMembersIdAndDeletedFalse(5L)).thenReturn(List.of(p1, p2));
 
         List<Project> result = projectService.getUserProjects(manager);
 
         assertEquals(2, result.size());
         assertEquals("Project A", result.get(0).getName());
         assertEquals("Project B", result.get(1).getName());
-        verify(projectRepository).findByMembersId(5L);
+        verify(projectRepository).findByMembersIdAndDeletedFalse(5L);
     }
 
     @Test
@@ -83,44 +83,52 @@ class ProjectServiceTest {
         p1.setId(11L);
         p1.setName("Team Tasks");
 
-        when(projectRepository.findByMembersId(8L)).thenReturn(List.of(p1));
+        when(projectRepository.findByMembersIdAndDeletedFalse(8L)).thenReturn(List.of(p1));
 
         List<Project> result = projectService.getUserProjects(user);
 
         assertEquals(1, result.size());
         assertEquals("Team Tasks", result.get(0).getName());
-        verify(projectRepository).findByMembersId(8L);
+        verify(projectRepository).findByMembersIdAndDeletedFalse(8L);
     }
 
     @Test
-    void deleteProjectShouldRemoveOwnedProject() {
-        User owner = new User();
-        owner.setId(5L);
+    void deleteProjectShouldSoftDeleteWhenAdmin() {
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole("ADMIN");
 
-        Project project = new Project("Project X", "Description X", owner);
+        Project project = new Project("Project X", "Description X", admin);
         project.setId(99L);
 
-        when(projectRepository.findById(99L)).thenReturn(java.util.Optional.of(project));
+        when(projectRepository.findByIdAndDeletedFalse(99L)).thenReturn(java.util.Optional.of(project));
+        when(projectRepository.save(project)).thenReturn(project);
 
-        projectService.deleteProject(99L, 5L);
+        projectService.deleteProject(99L, admin);
 
-        verify(projectRepository).delete(project);
+        assertTrue(project.isDeleted());
+        verify(projectRepository).save(project);
     }
 
     @Test
-    void deleteProjectShouldRejectNonOwner() {
-        User owner = new User();
-        owner.setId(5L);
+    void deleteProjectShouldRejectNonAdmin() {
+        User admin = new User();
+        admin.setId(5L);
+        admin.setRole("ADMIN");
 
-        Project project = new Project("Project X", "Description X", owner);
+        User manager = new User();
+        manager.setId(7L);
+        manager.setRole("MANAGER");
+
+        Project project = new Project("Project X", "Description X", admin);
         project.setId(99L);
 
-        when(projectRepository.findById(99L)).thenReturn(java.util.Optional.of(project));
+        when(projectRepository.findByIdAndDeletedFalse(99L)).thenReturn(java.util.Optional.of(project));
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> projectService.deleteProject(99L, 7L));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> projectService.deleteProject(99L, manager));
         assertTrue(ex.getMessage().contains("Forbidden"));
 
-        verify(projectRepository, never()).delete(any());
+        verify(projectRepository, never()).save(any());
     }
 
     @Test
@@ -133,13 +141,13 @@ class ProjectServiceTest {
         project.setId(88L);
         project.addMember(manager);
 
-        when(projectRepository.findById(88L)).thenReturn(java.util.Optional.of(project));
+        when(projectRepository.findByIdAndDeletedFalse(88L)).thenReturn(java.util.Optional.of(project));
 
         Project result = projectService.getProjectById(88L, manager);
 
         assertEquals(88L, result.getId());
         assertEquals("Project Y", result.getName());
-        verify(projectRepository).findById(88L);
+        verify(projectRepository).findByIdAndDeletedFalse(88L);
     }
 
     @Test
@@ -152,7 +160,7 @@ class ProjectServiceTest {
         project.setId(88L);
         project.addMember(user);
 
-        when(projectRepository.findById(88L)).thenReturn(java.util.Optional.of(project));
+        when(projectRepository.findByIdAndDeletedFalse(88L)).thenReturn(java.util.Optional.of(project));
 
         Project result = projectService.getProjectById(88L, user);
 
@@ -172,7 +180,7 @@ class ProjectServiceTest {
         Project project = new Project("Project Y", "Description Y", adminOwner);
         project.setId(88L);
 
-        when(projectRepository.findById(88L)).thenReturn(java.util.Optional.of(project));
+        when(projectRepository.findByIdAndDeletedFalse(88L)).thenReturn(java.util.Optional.of(project));
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> projectService.getProjectById(88L, user));
         assertTrue(ex.getMessage().contains("Forbidden"));
@@ -180,7 +188,7 @@ class ProjectServiceTest {
 
     @Test
     void getProjectByIdShouldThrowWhenNotFound() {
-        when(projectRepository.findById(999L)).thenReturn(java.util.Optional.empty());
+        when(projectRepository.findByIdAndDeletedFalse(999L)).thenReturn(java.util.Optional.empty());
 
         User admin = new User();
         admin.setId(1L);
@@ -199,7 +207,7 @@ class ProjectServiceTest {
         Project project = new Project("Old", "Old desc", admin);
         project.setId(20L);
 
-        when(projectRepository.findById(20L)).thenReturn(java.util.Optional.of(project));
+        when(projectRepository.findByIdAndDeletedFalse(20L)).thenReturn(java.util.Optional.of(project));
         when(projectRepository.save(project)).thenReturn(project);
 
         Project result = projectService.updateProject(20L, admin, "New", "New desc");
@@ -219,7 +227,7 @@ class ProjectServiceTest {
         project.setId(21L);
         project.addMember(manager);
 
-        when(projectRepository.findById(21L)).thenReturn(java.util.Optional.of(project));
+        when(projectRepository.findByIdAndDeletedFalse(21L)).thenReturn(java.util.Optional.of(project));
         when(projectRepository.save(project)).thenReturn(project);
 
         Project result = projectService.updateProject(21L, manager, "New", "New desc");
@@ -242,7 +250,7 @@ class ProjectServiceTest {
         Project project = new Project("Old", "Old desc", adminOwner);
         project.setId(22L);
 
-        when(projectRepository.findById(22L)).thenReturn(java.util.Optional.of(project));
+        when(projectRepository.findByIdAndDeletedFalse(22L)).thenReturn(java.util.Optional.of(project));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> projectService.updateProject(22L, manager, "New", "New desc"));
@@ -258,7 +266,7 @@ class ProjectServiceTest {
         Project project = new Project("Old", "Old desc", user);
         project.setId(23L);
 
-        when(projectRepository.findById(23L)).thenReturn(java.util.Optional.of(project));
+        when(projectRepository.findByIdAndDeletedFalse(23L)).thenReturn(java.util.Optional.of(project));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> projectService.updateProject(23L, user, "New", "New desc"));
@@ -271,7 +279,7 @@ class ProjectServiceTest {
         admin.setId(1L);
         admin.setRole("ADMIN");
 
-        when(projectRepository.findById(404L)).thenReturn(java.util.Optional.empty());
+        when(projectRepository.findByIdAndDeletedFalse(404L)).thenReturn(java.util.Optional.empty());
 
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> projectService.updateProject(404L, admin, "New", "New desc"));

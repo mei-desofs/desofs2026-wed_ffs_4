@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.desofs.project.model.Project;
+import com.desofs.project.service.ProjectMemberService;
 import com.desofs.project.service.ProjectService;
 import com.desofs.user.User;
 import com.desofs.user.UserRepository;
@@ -37,6 +38,9 @@ class ProjectControllerIT {
 
     @MockBean
     private ProjectService projectService;
+
+    @MockBean
+    private ProjectMemberService projectMemberService;
 
     @MockBean
     private UserRepository userRepository;
@@ -96,15 +100,15 @@ class ProjectControllerIT {
     }
 
     @Test
-    @WithMockUser(username = "user@example.com")
+    @WithMockUser(username = "admin@example.com", roles = { "ADMIN" })
     void deleteProjectShouldReturnNoContent() throws Exception {
-        User owner = new User();
-        owner.setId(1L);
-        owner.setEmail("user@example.com");
-        owner.setRole("USER");
+        User admin = new User();
+        admin.setId(1L);
+        admin.setEmail("admin@example.com");
+        admin.setRole("ADMIN");
 
-        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(owner));
-        doNothing().when(projectService).deleteProject(10L, 1L);
+        when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(admin));
+        doNothing().when(projectService).deleteProject(10L, admin);
 
         mockMvc.perform(delete("/api/projects/10"))
                 .andExpect(status().isNoContent());
@@ -217,5 +221,56 @@ class ProjectControllerIT {
     void projectEndpointsShouldRejectUnauthenticatedRequests() throws Exception {
         mockMvc.perform(get("/api/projects"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "admin@example.com", roles = { "ADMIN" })
+    void addMemberShouldAllowAdmin() throws Exception {
+        User admin = new User();
+        admin.setId(1L);
+        admin.setEmail("admin@example.com");
+        admin.setRole("ADMIN");
+
+        Project project = new Project("Project", "Desc", admin);
+        project.setId(50L);
+
+        when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(admin));
+        when(projectMemberService.addMember(50L, admin, "user@example.com")).thenReturn(project);
+
+        mockMvc.perform(post("/api/projects/50/members")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"user@example.com\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.projectId").value(50L));
+    }
+
+    @Test
+    @WithMockUser(username = "user@example.com", roles = { "USER" })
+    void addMemberShouldRejectUserRole() throws Exception {
+        mockMvc.perform(post("/api/projects/50/members")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"user@example.com\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "manager@example.com", roles = { "MANAGER" })
+    void removeMemberShouldAllowManager() throws Exception {
+        User manager = new User();
+        manager.setId(2L);
+        manager.setEmail("manager@example.com");
+        manager.setRole("MANAGER");
+
+        Project project = new Project("Project", "Desc", manager);
+        project.setId(60L);
+
+        when(userRepository.findByEmail("manager@example.com")).thenReturn(Optional.of(manager));
+        when(projectMemberService.removeMember(60L, manager, "user@example.com")).thenReturn(project);
+
+        mockMvc.perform(delete("/api/projects/60/members")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"user@example.com\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.projectId").value(60L));
     }
 }

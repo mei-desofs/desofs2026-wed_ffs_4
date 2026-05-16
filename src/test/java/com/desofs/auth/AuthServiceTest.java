@@ -50,8 +50,9 @@ class AuthServiceTest {
     void registerShouldRejectDuplicateEmail() {
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(new User()));
 
-        assertThrows(IllegalArgumentException.class,
-                () -> authService.register("user@example.com", "password123"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+            () -> authService.register("user@example.com", "password123"));
+        assertEquals("Email already in use", ex.getMessage());
 
         verify(userRepository, never()).save(any());
     }
@@ -83,8 +84,9 @@ class AuthServiceTest {
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrong-password", "encoded-password")).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class,
-                () -> authService.login("user@example.com", "wrong-password"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+            () -> authService.login("user@example.com", "wrong-password"));
+        assertEquals("Invalid credentials", ex.getMessage());
 
         verify(jwtUtil, never()).generateToken(any(), any());
     }

@@ -1,6 +1,10 @@
 package com.desofs.auth;
 
 import com.desofs.user.User;
+import com.desofs.security.JwtUtil;
+import com.desofs.security.TokenBlacklistService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -14,6 +18,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -25,6 +31,12 @@ class AuthControllerIT {
 
     @MockBean
     private AuthService authService;
+
+    @MockBean
+    private JwtUtil jwtUtil;
+
+    @MockBean
+    private TokenBlacklistService tokenBlacklistService;
 
     @Test
     void registerShouldReturnCreatedUser() throws Exception {
@@ -62,5 +74,22 @@ class AuthControllerIT {
                         .content("{\"email\":\"user@example.com\",\"password\":\"wrong-password\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("Invalid credentials"));
+    }
+
+    @Test
+    void logoutShouldBlacklistToken() throws Exception {
+        @SuppressWarnings("unchecked")
+        Jws<Claims> jws = mock(Jws.class);
+        Claims claims = mock(Claims.class);
+
+        when(jwtUtil.validate("jwt-token")).thenReturn(jws);
+        when(jws.getBody()).thenReturn(claims);
+        when(claims.getExpiration()).thenReturn(new java.util.Date());
+        doNothing().when(tokenBlacklistService).blacklist("jwt-token", claims.getExpiration().toInstant());
+
+        mockMvc.perform(post("/auth/logout")
+                        .header("Authorization", "Bearer jwt-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Logged out"));
     }
 }
