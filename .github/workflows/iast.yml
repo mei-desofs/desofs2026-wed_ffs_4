@@ -48,7 +48,7 @@ jobs:
       - name: Run ZAP to drive traffic (triggers IAST)
         uses: zaproxy/action-full-scan@v0.12.0
         with:
-          target: 'http://localhost:8080'
+          target: 'http://host.docker.internal:8080'
           fail_action: false
 
       - name: Collect IAST results
