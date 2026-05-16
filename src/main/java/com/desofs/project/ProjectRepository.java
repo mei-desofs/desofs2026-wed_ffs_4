@@ -1,9 +1,3 @@
 package com.desofs.project;
 
-import java.util.List;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface ProjectRepository extends JpaRepository<Project, Long> {
-    List<Project> findByOwnerId(Long ownerId);
-}
+// Deprecated placeholder. Moved to com.desofs.project.repository.ProjectRepository.
