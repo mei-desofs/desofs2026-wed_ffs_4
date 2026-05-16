@@ -1,6 +1,7 @@
 name: IAST (Interactive Security Testing)
 on:
   workflow_dispatch:
+  pull_request:
   schedule:
     - cron: '0 4 * * *'
 
