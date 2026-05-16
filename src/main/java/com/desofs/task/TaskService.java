@@ -8,11 +8,13 @@ import com.desofs.task.dto.TaskResponse;
 import com.desofs.task.dto.UpdateTaskRequest;
 import com.desofs.user.User;
 import com.desofs.user.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -130,10 +132,15 @@ public class TaskService {
      * Advances the task status following the pipeline: TODO → IN_PROGRESS → DONE.
      * Reversals are not permitted.
      *
-     * @throws IllegalArgumentException if status is null, task not found, wrong project,
-     *                                  or the transition is invalid
+     * FR-13 / SR-4: ADMIN and MANAGER may change the status of any task in the project.
+     * A MEMBER may only change the status of a task they are personally assigned to.
+     *
+     * @throws IllegalArgumentException  if status is null, task not found, wrong project,
+     *                                   or the transition is invalid
+     * @throws AccessDeniedException     if caller is a MEMBER who is not the task assignee
      */
-    public TaskResponse changeTaskStatus(Long projectId, UUID taskId, ChangeTaskStatusRequest request) {
+    public TaskResponse changeTaskStatus(Long projectId, UUID taskId,
+                                         ChangeTaskStatusRequest request, String callerEmail) {
         if (request.getStatus() == null) {
             throw new IllegalArgumentException("Status must not be null");
         }
@@ -143,6 +150,15 @@ public class TaskService {
 
         if (!task.getProjectId().equals(projectId)) {
             throw new IllegalArgumentException("Task does not belong to project: " + projectId);
+        }
+
+        // FR-13 / SR-4: only ADMIN/MANAGER or the assigned MEMBER may update status
+        User caller = resolveUser(callerEmail);
+        boolean isManagerOrAbove = isManagerOrAdmin(caller.getRole());
+        boolean isAssignee = Objects.equals(task.getAssigneeId(), caller.getId());
+        if (!isManagerOrAbove && !isAssignee) {
+            throw new AccessDeniedException(
+                    "Only the assigned member or a manager/admin may change this task's status");
         }
 
         if (!task.getStatus().canTransitionTo(request.getStatus())) {
@@ -183,14 +199,33 @@ public class TaskService {
      * Assigns (or unassigns) a task to a user.
      * Pass {@code null} as assigneeId to remove the current assignee.
      *
+     * FR-15: ADMIN and MANAGER may assign tasks to any project member or unassign them.
+     * A MEMBER may only self-assign to a task that currently has no assignee.
+     *
      * @throws IllegalArgumentException if task not found, wrong project, or target user not found
+     * @throws AccessDeniedException    if caller is a MEMBER trying to assign someone else,
+     *                                  or trying to reassign an already-assigned task
      */
-    public TaskResponse assignTask(Long projectId, UUID taskId, AssignTaskRequest request) {
+    public TaskResponse assignTask(Long projectId, UUID taskId,
+                                   AssignTaskRequest request, String callerEmail) {
         Task task = taskRepository.findByIdAndDeletedFalse(taskId)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found: " + taskId));
 
         if (!task.getProjectId().equals(projectId)) {
             throw new IllegalArgumentException("Task does not belong to project: " + projectId);
+        }
+
+        // FR-15 / SR-4: MANAGER/ADMIN can assign anyone; MEMBER may only self-assign to unassigned tasks
+        User caller = resolveUser(callerEmail);
+        if (!isManagerOrAdmin(caller.getRole())) {
+            if (task.getAssigneeId() != null) {
+                throw new AccessDeniedException(
+                        "Task is already assigned; only a manager/admin may reassign it");
+            }
+            if (!Objects.equals(request.getAssigneeId(), caller.getId())) {
+                throw new AccessDeniedException(
+                        "Members may only assign themselves to unassigned tasks");
+            }
         }
 
         if (request.getAssigneeId() != null && !userRepository.existsById(request.getAssigneeId())) {
@@ -208,6 +243,10 @@ public class TaskService {
     private User resolveUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + email));
+    }
+
+    private boolean isManagerOrAdmin(String role) {
+        return "ADMIN".equals(role) || "MANAGER".equals(role);
     }
 
     private void validateTitle(String title) {
