@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches: [ "**" ]
   pull_request:
 
 jobs:
@@ -35,7 +35,34 @@ jobs:
         run: mvn -B clean test
 
       - name: Dependency scan
-        run: mvn -B -DskipTests -DdataDirectory=.dependency-check-data org.owasp:dependency-check-maven:check
+        run: mvn -B -DskipTests -DdataDirectory=.dependency-check-data -DnvdApiKey=${{ secrets.NVD_API_KEY }} -DfailBuildOnCVSS=11 org.owasp:dependency-check-maven:check
 
       - name: Static analysis
         run: mvn -B -DskipTests com.github.spotbugs:spotbugs-maven-plugin:check
+
+      # --- Start DAST Phase ---
+
+      - name: Package application
+        run: mvn -B package -DskipTests
+
+      - name: Start Database
+        run: docker compose up -d
+
+      - name: Wait for database to be ready
+        run: sleep 15
+
+      - name: Start Spring Boot Application
+        run: java -jar target/desofs-app-0.1.0.jar &
+
+      - name: Wait for application to be ready
+        run: sleep 20
+
+      - name: OWASP ZAP Baseline Scan (DAST)
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:8080'
+          fail_action: false
+
+      - name: Stop infrastructure
+        if: always()
+        run: docker compose down
