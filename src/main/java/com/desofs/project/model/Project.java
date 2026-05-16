@@ -2,6 +2,7 @@ package com.desofs.project.model;
 
 import com.desofs.user.User;
 import jakarta.persistence.*;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -51,7 +52,8 @@ public class Project {
     public void setDeleted(boolean deleted) { this.deleted = deleted; }
     public User getOwner() { return owner; }
     public void setOwner(User owner) { this.owner = owner; }
-    public Set<User> getMembers() { return members; }
-    public void setMembers(Set<User> members) { this.members = members; }
+    public Set<User> getMembers() { return Collections.unmodifiableSet(members); }
+    public void setMembers(Set<User> members) { this.members = new HashSet<>(members); }
     public void addMember(User member) { this.members.add(member); }
+    public void removeMember(User member) { this.members.removeIf(m -> m.getId() != null && m.getId().equals(member.getId())); }
 }

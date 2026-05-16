@@ -3,6 +3,8 @@ package com.desofs.attachment;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.unit.DataSize;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 @ConfigurationProperties(prefix = "app.attachments")
@@ -15,6 +17,6 @@ public class AttachmentStorageProperties {
     public void setStorageDir(String storageDir) { this.storageDir = storageDir; }
     public DataSize getMaxFileSize() { return maxFileSize; }
     public void setMaxFileSize(DataSize maxFileSize) { this.maxFileSize = maxFileSize; }
-    public Set<String> getAllowedExtensions() { return allowedExtensions; }
-    public void setAllowedExtensions(Set<String> allowedExtensions) { this.allowedExtensions = allowedExtensions; }
+    public Set<String> getAllowedExtensions() { return Collections.unmodifiableSet(allowedExtensions); }
+    public void setAllowedExtensions(Set<String> allowedExtensions) { this.allowedExtensions = new HashSet<>(allowedExtensions); }
 }
