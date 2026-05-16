@@ -8,6 +8,8 @@ on:
 jobs:
   test-h2:
     runs-on: ubuntu-latest
+    env:
+      SPRING_PROFILES_ACTIVE: test
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,7 +20,7 @@ jobs:
           java-version: '17'
           cache: maven
       - name: Run tests with H2
-        run: mvn -B clean test -Dspring.profiles.active=test
+        run: mvn -B clean test
       - name: Upload test reports
         uses: actions/upload-artifact@v4
         with:
