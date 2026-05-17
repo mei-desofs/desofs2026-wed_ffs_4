@@ -1,0 +1,25 @@
+name: ASVS Mapping
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+
+jobs:
+  asvs-mapping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Generate ASVS mapping (specs to tests)
+        run: |
+          echo "# ASVS Mapping" > asvs-mapping.md
+          echo "\n## Requirements and Test Coverage" >> asvs-mapping.md
+          grep -r 'ASVS' Deliverables/Phase1/ >> asvs-mapping.md || true
+          echo "\n## Test Classes" >> asvs-mapping.md
+          find src/test -name '*.java' >> asvs-mapping.md
+      - name: Upload ASVS mapping
+        uses: actions/upload-artifact@v4
+        with:
+          name: asvs-mapping
+          path: asvs-mapping.md

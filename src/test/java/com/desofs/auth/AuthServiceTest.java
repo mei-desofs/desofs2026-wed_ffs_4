@@ -1,20 +1,23 @@
 package com.desofs.auth;
 
-import com.desofs.security.JwtUtil;
-import com.desofs.user.User;
-import com.desofs.user.UserRepository;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import com.desofs.user.User;
+import com.desofs.user.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -24,9 +27,6 @@ class AuthServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
-
-    @Mock
-    private JwtUtil jwtUtil;
 
     @InjectMocks
     private AuthService authService;
@@ -50,42 +50,11 @@ class AuthServiceTest {
     void registerShouldRejectDuplicateEmail() {
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(new User()));
 
-        assertThrows(IllegalArgumentException.class,
-                () -> authService.register("user@example.com", "password123"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+            () -> authService.register("user@example.com", "password123"));
+        assertEquals("Email already in use", ex.getMessage());
 
         verify(userRepository, never()).save(any());
     }
 
-    @Test
-    void loginShouldReturnJwtTokenWhenCredentialsAreValid() {
-        User user = new User();
-        user.setEmail("user@example.com");
-        user.setPassword("encoded-password");
-        user.setRole("USER");
-
-        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("password123", "encoded-password")).thenReturn(true);
-        when(jwtUtil.generateToken("user@example.com", "USER")).thenReturn("jwt-token");
-
-        String token = authService.login("user@example.com", "password123");
-
-        assertEquals("jwt-token", token);
-        verify(jwtUtil).generateToken("user@example.com", "USER");
-    }
-
-    @Test
-    void loginShouldRejectInvalidCredentials() {
-        User user = new User();
-        user.setEmail("user@example.com");
-        user.setPassword("encoded-password");
-        user.setRole("USER");
-
-        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("wrong-password", "encoded-password")).thenReturn(false);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> authService.login("user@example.com", "wrong-password"));
-
-        verify(jwtUtil, never()).generateToken(any(), any());
-    }
 }

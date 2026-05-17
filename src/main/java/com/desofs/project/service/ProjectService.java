@@ -21,29 +21,30 @@ public class ProjectService {
         return projectRepository.save(project);
     }
 
-    public void deleteProject(Long projectId, Long ownerId) {
-        Project project = projectRepository.findById(projectId)
+    public void deleteProject(Long projectId, User user) {
+        Project project = projectRepository.findByIdAndDeletedFalse(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
-        if (project.getOwner() == null || project.getOwner().getId() == null || !project.getOwner().getId().equals(ownerId)) {
+        if (!"ADMIN".equals(user.getRole())) {
             throw new RuntimeException("Forbidden");
         }
 
-        projectRepository.delete(project);
+        project.setDeleted(true);
+        projectRepository.save(project);
     }
 
     public List<Project> getUserProjects(User user) {
         if ("ADMIN".equals(user.getRole())) {
-            return projectRepository.findAll();
+            return projectRepository.findAllByDeletedFalse();
         }
         if ("MANAGER".equals(user.getRole()) || "USER".equals(user.getRole())) {
-            return projectRepository.findByMembersId(user.getId());
+            return projectRepository.findByMembersIdAndDeletedFalse(user.getId());
         }
         throw new RuntimeException("Forbidden");
     }
 
     public Project getProjectById(Long projectId, User user) {
-        Project project = projectRepository.findById(projectId)
+        Project project = projectRepository.findByIdAndDeletedFalse(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
         if ("ADMIN".equals(user.getRole())) {
@@ -63,7 +64,7 @@ public class ProjectService {
     }
 
     public Project updateProject(Long projectId, User user, String name, String description) {
-        Project project = projectRepository.findById(projectId)
+        Project project = projectRepository.findByIdAndDeletedFalse(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
         if ("ADMIN".equals(user.getRole())) {

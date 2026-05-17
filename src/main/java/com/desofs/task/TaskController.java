@@ -79,7 +79,7 @@ public class TaskController {
             @PathVariable UUID taskId,
             @RequestBody ChangeTaskStatusRequest request) {
         try {
-            TaskResponse response = taskService.changeTaskStatus(projectId, taskId, request);
+            TaskResponse response = taskService.changeTaskStatus(projectId, taskId, request, currentUserEmail());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
@@ -108,7 +108,7 @@ public class TaskController {
             @PathVariable UUID taskId,
             @RequestBody AssignTaskRequest request) {
         try {
-            TaskResponse response = taskService.assignTask(projectId, taskId, request);
+            TaskResponse response = taskService.assignTask(projectId, taskId, request, currentUserEmail());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
