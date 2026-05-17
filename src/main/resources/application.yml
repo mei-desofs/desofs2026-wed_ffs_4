@@ -27,8 +27,16 @@ app:
     storage-dir: uploads/attachments
     max-file-size: 25MB
     allowed-extensions:
+      - pdf
+      - doc
+      - docx
+      - xls
+      - xlsx
+      - ppt
+      - pptx
       - jpg
       - jpeg
       - png
-      - webp
-      - pdf
+      - gif
+    max-uploads-per-window: 10
+    upload-window: 1h
