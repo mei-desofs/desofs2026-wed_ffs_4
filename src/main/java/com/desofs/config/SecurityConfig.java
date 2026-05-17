@@ -39,10 +39,13 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**", "/actuator/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/admin/users/*/role").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/admin/users/*/role").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/projects/*/tasks").hasAnyRole("ADMIN", "MANAGER")
+                // Project-level POST rules (create project = ADMIN only; member management = ADMIN/MANAGER)
                 .requestMatchers(HttpMethod.POST, "/api/projects/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/projects/**").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.POST, "/api/projects/*/members/**").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.DELETE, "/api/projects/*/tasks/*").hasAnyRole("ADMIN", "MANAGER")
                 .requestMatchers(HttpMethod.DELETE, "/api/projects/*/members/**").hasAnyRole("ADMIN", "MANAGER")
                 .anyRequest().authenticated())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
