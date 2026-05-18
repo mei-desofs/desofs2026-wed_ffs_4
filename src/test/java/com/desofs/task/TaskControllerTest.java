@@ -151,10 +151,13 @@ class TaskControllerTest {
     @DisplayName("GET listTasks")
     class ListTasks {
 
+        @BeforeEach
+        void auth() { setAuthenticatedUser(USER_EMAIL); }
+
         @Test
         @DisplayName("200 OK with task list")
         void success_returns200() {
-            when(taskService.listTasksByProject(PROJECT_ID)).thenReturn(List.of(dummyResponse()));
+            when(taskService.listTasksByProject(PROJECT_ID, USER_EMAIL)).thenReturn(List.of(dummyResponse()));
 
             ResponseEntity<?> resp = controller.listTasks(PROJECT_ID);
 
@@ -164,12 +167,22 @@ class TaskControllerTest {
         @Test
         @DisplayName("400 Bad Request when project not found")
         void projectNotFound_returns400() {
-            when(taskService.listTasksByProject(PROJECT_ID))
+            when(taskService.listTasksByProject(PROJECT_ID, USER_EMAIL))
                     .thenThrow(new IllegalArgumentException("Project not found"));
 
             ResponseEntity<?> resp = controller.listTasks(PROJECT_ID);
 
             assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+        }
+
+        @Test
+        @DisplayName("AccessDeniedException propagates when caller is not a project member")
+        void callerNotMember_propagatesAccessDenied() {
+            when(taskService.listTasksByProject(PROJECT_ID, USER_EMAIL))
+                    .thenThrow(new org.springframework.security.access.AccessDeniedException("not a member"));
+
+            assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> controller.listTasks(PROJECT_ID));
         }
     }
 
@@ -180,12 +193,15 @@ class TaskControllerTest {
     @DisplayName("PUT updateTask")
     class UpdateTask {
 
+        @BeforeEach
+        void auth() { setAuthenticatedUser(USER_EMAIL); }
+
         @Test
         @DisplayName("200 OK with updated task")
         void success_returns200() {
             UpdateTaskRequest req = new UpdateTaskRequest();
             req.setTitle("Updated");
-            when(taskService.updateTask(PROJECT_ID, TASK_ID, req)).thenReturn(dummyResponse());
+            when(taskService.updateTask(PROJECT_ID, TASK_ID, req, USER_EMAIL)).thenReturn(dummyResponse());
 
             ResponseEntity<?> resp = controller.updateTask(PROJECT_ID, TASK_ID, req);
 
@@ -196,12 +212,23 @@ class TaskControllerTest {
         @DisplayName("400 Bad Request when task not found")
         void taskNotFound_returns400() {
             UpdateTaskRequest req = new UpdateTaskRequest();
-            when(taskService.updateTask(PROJECT_ID, TASK_ID, req))
+            when(taskService.updateTask(PROJECT_ID, TASK_ID, req, USER_EMAIL))
                     .thenThrow(new IllegalArgumentException("Task not found"));
 
             ResponseEntity<?> resp = controller.updateTask(PROJECT_ID, TASK_ID, req);
 
             assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+        }
+
+        @Test
+        @DisplayName("AccessDeniedException propagates when caller is not a project member")
+        void callerNotMember_propagatesAccessDenied() {
+            UpdateTaskRequest req = new UpdateTaskRequest();
+            when(taskService.updateTask(PROJECT_ID, TASK_ID, req, USER_EMAIL))
+                    .thenThrow(new org.springframework.security.access.AccessDeniedException("not a member"));
+
+            assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> controller.updateTask(PROJECT_ID, TASK_ID, req));
         }
     }
 
@@ -248,10 +275,13 @@ class TaskControllerTest {
     @DisplayName("DELETE deleteTask")
     class DeleteTask {
 
+        @BeforeEach
+        void auth() { setAuthenticatedUser(USER_EMAIL); }
+
         @Test
         @DisplayName("204 No Content on successful soft-delete")
         void success_returns204() {
-            doNothing().when(taskService).deleteTask(PROJECT_ID, TASK_ID);
+            doNothing().when(taskService).deleteTask(PROJECT_ID, TASK_ID, USER_EMAIL);
 
             ResponseEntity<?> resp = controller.deleteTask(PROJECT_ID, TASK_ID);
 
@@ -262,11 +292,21 @@ class TaskControllerTest {
         @DisplayName("400 Bad Request when task not found")
         void taskNotFound_returns400() {
             doThrow(new IllegalArgumentException("Task not found"))
-                    .when(taskService).deleteTask(PROJECT_ID, TASK_ID);
+                    .when(taskService).deleteTask(PROJECT_ID, TASK_ID, USER_EMAIL);
 
             ResponseEntity<?> resp = controller.deleteTask(PROJECT_ID, TASK_ID);
 
             assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+        }
+
+        @Test
+        @DisplayName("AccessDeniedException propagates when caller is not a project member")
+        void callerNotMember_propagatesAccessDenied() {
+            doThrow(new org.springframework.security.access.AccessDeniedException("not a member"))
+                    .when(taskService).deleteTask(PROJECT_ID, TASK_ID, USER_EMAIL);
+
+            assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> controller.deleteTask(PROJECT_ID, TASK_ID));
         }
     }
 
@@ -304,6 +344,18 @@ class TaskControllerTest {
 
             assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
         }
+
+        @Test
+        @DisplayName("400 Bad Request when assignee is not a member of the project")
+        void assigneeNotProjectMember_returns400() {
+            AssignTaskRequest req = new AssignTaskRequest();
+            req.setAssigneeId(99L);
+            when(taskService.assignTask(PROJECT_ID, TASK_ID, req, USER_EMAIL))
+                    .thenThrow(new IllegalArgumentException("User 99 is not a member of project 1"));
+
+            ResponseEntity<?> resp = controller.assignTask(PROJECT_ID, TASK_ID, req);
+
+            assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+        }
     }
 }
-
