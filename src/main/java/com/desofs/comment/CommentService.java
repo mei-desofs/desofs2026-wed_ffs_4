@@ -62,7 +62,7 @@ public class CommentService {
 
         // RBAC check: only author, manager, or admin can edit (SR-2, SR-4)
         if (!comment.getAuthorId().equals(user.getId()) && !isManagerOrAdmin(user)) {
-            throw new IllegalArgumentException("Forbidden: You can only edit your own comments");
+            throw new SecurityException("Forbidden: You can only edit your own comments");
         }
 
         comment.setContent(request.getContent().trim());
@@ -80,7 +80,7 @@ public class CommentService {
 
         // RBAC check: only author, manager, or admin can delete (SR-2, SR-4)
         if (!comment.getAuthorId().equals(user.getId()) && !isManagerOrAdmin(user)) {
-            throw new IllegalArgumentException("Forbidden: You can only delete your own comments");
+            throw new SecurityException("Forbidden: You can only delete your own comments");
         }
 
         // Soft delete: set timestamp instead of removing row (SR-9)
