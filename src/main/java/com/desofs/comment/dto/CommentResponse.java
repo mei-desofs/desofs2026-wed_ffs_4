@@ -4,6 +4,7 @@ import com.desofs.comment.Comment;
 import org.springframework.web.util.HtmlUtils;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Read model returned by all Comment endpoints.
@@ -13,13 +14,14 @@ import java.time.LocalDateTime;
 public class CommentResponse {
 
     private Long id;
-    private Long taskId;
+    private UUID taskId; // UUID to match Task.id
     private String content;
     private Long authorId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public CommentResponse() {}
+    public CommentResponse() {
+    }
 
     /** Factory method: builds response from entity with XSS protection. */
     public static CommentResponse from(Comment comment) {
@@ -33,10 +35,27 @@ public class CommentResponse {
         return r;
     }
 
-    public Long getId() { return id; }
-    public Long getTaskId() { return taskId; }
-    public String getContent() { return content; }
-    public Long getAuthorId() { return authorId; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-} 
+    public Long getId() {
+        return id;
+    }
+
+    public UUID getTaskId() {
+        return taskId;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public Long getAuthorId() {
+        return authorId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+}
