@@ -1,0 +1,18 @@
+# Default owners for source code
+src/ @milanmarcinco @jagfoljersolen @filipemagalhaes03 @TiagoPinto13
+
+# Security-sensitive areas
+src/main/java/com/desofs/auth/     @milanmarcinco @jagfoljersolen @filipemagalhaes03 @TiagoPinto13
+src/main/java/com/desofs/security/ @milanmarcinco @jagfoljersolen @filipemagalhaes03 @TiagoPinto13
+src/main/java/com/desofs/config/   @milanmarcinco @jagfoljersolen @filipemagalhaes03 @TiagoPinto13
+src/main/java/com/desofs/user/     @milanmarcinco @jagfoljersolen @filipemagalhaes03 @TiagoPinto13
+
+# Infrastructure / CI
+.github/workflows/ @milanmarcinco @jagfoljersolen @filipemagalhaes03 @TiagoPinto13
+*.yml              @milanmarcinco @jagfoljersolen @filipemagalhaes03 @TiagoPinto13
+compose.yml        @milanmarcinco @jagfoljersolen @filipemagalhaes03 @TiagoPinto13
+spotbugs-exclude.xml @milanmarcinco @jagfoljersolen @filipemagalhaes03 @TiagoPinto13
+
+# Documentation
+Deliverables/ @milanmarcinco @jagfoljersolen @filipemagalhaes03 @TiagoPinto13
+Docs/         @milanmarcinco @jagfoljersolen @filipemagalhaes03 @TiagoPinto13
