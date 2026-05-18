@@ -3,6 +3,8 @@ package com.desofs.comment;
 import com.desofs.comment.dto.CommentResponse;
 import com.desofs.comment.dto.CreateCommentRequest;
 import com.desofs.comment.dto.UpdateCommentRequest;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -58,6 +60,8 @@ public class CommentController {
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
+        }catch (SecurityException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody(ex.getMessage()));
         }
     }
 
@@ -72,6 +76,8 @@ public class CommentController {
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
+        } catch (SecurityException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody(ex.getMessage()));
         }
     }
 
