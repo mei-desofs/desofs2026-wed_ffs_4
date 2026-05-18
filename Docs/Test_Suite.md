@@ -4,10 +4,10 @@ Documento com os testes atualmente existentes no projeto.
 
 ## Overview
 
-- Suite total validada: 198 testes
+- Suite total validada: 244 testes
 - Cobertura por camadas: unitários, controller, integration e end-to-end
 
-Nota: alguns runners mostram mais entradas por causa de classes aninhadas e relatórios separados, mas o total efetivo executado no Maven foi 198.
+Nota: alguns runners mostram mais entradas por causa de classes aninhadas e relatórios separados, mas o total efetivo executado no Maven foi 244.
 
 ## Authentication
 

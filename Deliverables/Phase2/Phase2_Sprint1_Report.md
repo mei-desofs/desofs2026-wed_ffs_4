@@ -79,10 +79,10 @@ The test suite is documented in [Docs/Test_Suite.md](../../Docs/Test_Suite.md).
 
 ### Validation status
 
-- Full suite validated: **198 tests passed**
+- Full suite validated: **244 tests passed**
 - E2E suite validated separately
 
-Nota: algumas saídas do runner mostram mais entradas por classes aninhadas e relatórios separados, mas o total efetivo executado no Maven foi 198.
+Nota: algumas saídas do runner mostram mais entradas por classes aninhadas e relatórios separados, mas o total efetivo executado no Maven foi 244.
 
 ---
 
