@@ -4,29 +4,32 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.desofs.project.model.Project;
 import com.desofs.project.service.ProjectMemberService;
 import com.desofs.project.service.ProjectService;
 import com.desofs.user.User;
 import com.desofs.user.UserRepository;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -36,13 +39,13 @@ class ProjectControllerIT {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
+    @MockBean
     private ProjectService projectService;
 
-    @MockitoBean
+    @MockBean
     private ProjectMemberService projectMemberService;
 
-    @MockitoBean
+    @MockBean
     private UserRepository userRepository;
 
     @Test
@@ -91,7 +94,7 @@ class ProjectControllerIT {
         p2.setId(2L);
 
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(owner));
-        when(projectService.getUserProjects(any(User.class))).thenReturn(List.of(p1, p2));
+        when(projectService.getUserProjects(any(User.class), nullable(String.class))).thenReturn(List.of(p1, p2));
 
         mockMvc.perform(get("/api/projects"))
                 .andExpect(status().isOk())
@@ -265,11 +268,11 @@ class ProjectControllerIT {
         project.setId(60L);
 
         when(userRepository.findByEmail("manager@example.com")).thenReturn(Optional.of(manager));
-        when(projectMemberService.removeMember(60L, manager, "user@example.com")).thenReturn(project);
+        when(projectMemberService.removeMember(60L, manager, 99L)).thenReturn(project);
 
-        mockMvc.perform(delete("/api/projects/60/members")
+        mockMvc.perform(delete("/api/projects/60/members/99")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"user@example.com\"}"))
+                        .content("{}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.projectId").value(60L));
     }
