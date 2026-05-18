@@ -1,17 +1,28 @@
 package com.desofs.task;
 
-import com.desofs.task.dto.AssignTaskRequest;
-import com.desofs.task.dto.ChangeTaskStatusRequest;
-import com.desofs.task.dto.CreateTaskRequest;
-import com.desofs.task.dto.TaskResponse;
-import com.desofs.task.dto.UpdateTaskRequest;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.UUID;
+import com.desofs.task.dto.AssignTaskRequest;
+import com.desofs.task.dto.ChangeTaskStatusRequest;
+import com.desofs.task.dto.CreateTaskRequest;
+import com.desofs.task.dto.TaskDetailResponse;
+import com.desofs.task.dto.TaskResponse;
+import com.desofs.task.dto.UpdateTaskRequest;
 
 /**
  * REST controller for Task endpoints, nested under /api/projects/{projectId}/tasks.
@@ -23,7 +34,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/projects/{projectId}/tasks")
 public class TaskController {
-
     private final TaskService taskService;
 
     public TaskController(TaskService taskService) {
@@ -33,12 +43,9 @@ public class TaskController {
     // ── FR-10: Create task ───────────────────────────────────────────────────
 
     @PostMapping
-    public ResponseEntity<?> createTask(
-            @PathVariable Long projectId,
-            @RequestBody CreateTaskRequest request) {
+    public ResponseEntity<?> createTask(@PathVariable Long projectId, @RequestBody CreateTaskRequest request) {
         try {
-            TaskResponse response = taskService.createTask(projectId, request, currentUserEmail());
-            return ResponseEntity.status(201).body(response);
+            return ResponseEntity.status(201).body(taskService.createTask(projectId, request, currentUserEmail()));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
         }
@@ -58,14 +65,11 @@ public class TaskController {
 
     // ── FR-12: Update task ───────────────────────────────────────────────────
 
-    @PutMapping("/{taskId}")
-    public ResponseEntity<?> updateTask(
-            @PathVariable Long projectId,
-            @PathVariable UUID taskId,
-            @RequestBody UpdateTaskRequest request) {
+    @GetMapping(params = "status")
+    public ResponseEntity<?> listTasksByStatus(@PathVariable Long projectId, @RequestParam String status) {
         try {
-            TaskResponse response = taskService.updateTask(projectId, taskId, request);
-            return ResponseEntity.ok(response);
+            List<TaskResponse> tasks = taskService.listTasksByProject(projectId, TaskStatus.valueOf(status.trim().toUpperCase()));
+            return ResponseEntity.ok(tasks);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
         }
@@ -73,13 +77,10 @@ public class TaskController {
 
     // ── FR-13: Change task status ────────────────────────────────────────────
 
-    @PatchMapping("/{taskId}/status")
-    public ResponseEntity<?> changeTaskStatus(
-            @PathVariable Long projectId,
-            @PathVariable UUID taskId,
-            @RequestBody ChangeTaskStatusRequest request) {
+    @GetMapping("/{taskId}")
+    public ResponseEntity<?> getTask(@PathVariable Long projectId, @PathVariable UUID taskId) {
         try {
-            TaskResponse response = taskService.changeTaskStatus(projectId, taskId, request, currentUserEmail());
+            TaskDetailResponse response = taskService.getTask(projectId, taskId);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
@@ -88,10 +89,30 @@ public class TaskController {
 
     // ── FR-14: Soft-delete task ──────────────────────────────────────────────
 
+    @PutMapping("/{taskId}")
+    public ResponseEntity<?> updateTask(@PathVariable Long projectId, @PathVariable UUID taskId, @RequestBody UpdateTaskRequest request) {
+        try {
+            return ResponseEntity.ok(taskService.updateTask(projectId, taskId, request));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
+        }
+    }
+
+    // ── FR-15: Assign task to member ─────────────────────────────────────────
+
+    @PatchMapping("/{taskId}/status")
+    public ResponseEntity<?> changeTaskStatus(@PathVariable Long projectId, @PathVariable UUID taskId, @RequestBody ChangeTaskStatusRequest request) {
+        try {
+            return ResponseEntity.ok(taskService.changeTaskStatus(projectId, taskId, request, currentUserEmail()));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
+        }
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
     @DeleteMapping("/{taskId}")
-    public ResponseEntity<?> deleteTask(
-            @PathVariable Long projectId,
-            @PathVariable UUID taskId) {
+    public ResponseEntity<?> deleteTask(@PathVariable Long projectId, @PathVariable UUID taskId) {
         try {
             taskService.deleteTask(projectId, taskId);
             return ResponseEntity.noContent().build();
@@ -100,22 +121,14 @@ public class TaskController {
         }
     }
 
-    // ── FR-15: Assign task to member ─────────────────────────────────────────
-
     @PatchMapping("/{taskId}/assignee")
-    public ResponseEntity<?> assignTask(
-            @PathVariable Long projectId,
-            @PathVariable UUID taskId,
-            @RequestBody AssignTaskRequest request) {
+    public ResponseEntity<?> assignTask(@PathVariable Long projectId, @PathVariable UUID taskId, @RequestBody AssignTaskRequest request) {
         try {
-            TaskResponse response = taskService.assignTask(projectId, taskId, request, currentUserEmail());
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(taskService.assignTask(projectId, taskId, request, currentUserEmail()));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
         }
     }
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
 
     private String currentUserEmail() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
