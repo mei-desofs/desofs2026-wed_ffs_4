@@ -51,6 +51,7 @@ public class TaskService {
      * @param callerEmail email of the authenticated user, used to record createdBy
      * @return the persisted task as a response DTO
      * @throws IllegalArgumentException if title is blank or the project does not exist
+     * @throws AccessDeniedException    if the caller is not a member of the project
      */
     public TaskResponse createTask(Long projectId, CreateTaskRequest request, String callerEmail) {
         validateTitle(request.getTitle());
@@ -60,6 +61,7 @@ public class TaskService {
         }
 
         User caller = resolveUser(callerEmail);
+        verifyCallerProjectAccess(projectId, caller);
 
         Task task = new Task();
         task.setProjectId(projectId);
@@ -76,15 +78,20 @@ public class TaskService {
     /**
      * Lists all non-deleted tasks for a project.
      *
-     * @param projectId the project whose tasks are requested
+     * @param projectId   the project whose tasks are requested
+     * @param callerEmail email of the authenticated user
      * @return list of task response DTOs (may be empty)
      * @throws IllegalArgumentException if the project does not exist
+     * @throws AccessDeniedException    if the caller is not a member of the project
      */
     @Transactional(readOnly = true)
-    public List<TaskResponse> listTasksByProject(Long projectId) {
+    public List<TaskResponse> listTasksByProject(Long projectId, String callerEmail) {
         if (!projectRepository.existsById(projectId)) {
             throw new IllegalArgumentException("Project not found: " + projectId);
         }
+
+        User caller = resolveUser(callerEmail);
+        verifyCallerProjectAccess(projectId, caller);
 
         return taskRepository.findByProjectIdAndDeletedFalse(projectId)
                 .stream()
@@ -98,19 +105,24 @@ public class TaskService {
      * Updates the title and/or description of an existing task.
      * Only fields that are non-null in the request are applied (partial update).
      *
-     * @param projectId the project the task belongs to (used for ownership validation)
-     * @param taskId    UUID of the task to update
-     * @param request   the fields to change
+     * @param projectId   the project the task belongs to (used for ownership validation)
+     * @param taskId      UUID of the task to update
+     * @param request     the fields to change
+     * @param callerEmail email of the authenticated user
      * @return updated task as a response DTO
      * @throws IllegalArgumentException if the task does not exist or does not belong to the project
+     * @throws AccessDeniedException    if the caller is not a member of the project
      */
-    public TaskResponse updateTask(Long projectId, UUID taskId, UpdateTaskRequest request) {
+    public TaskResponse updateTask(Long projectId, UUID taskId, UpdateTaskRequest request, String callerEmail) {
         Task task = taskRepository.findByIdAndDeletedFalse(taskId)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found: " + taskId));
 
         if (!task.getProjectId().equals(projectId)) {
             throw new IllegalArgumentException("Task does not belong to project: " + projectId);
         }
+
+        User caller = resolveUser(callerEmail);
+        verifyCallerProjectAccess(projectId, caller);
 
         if (request.getTitle() != null) {
             validateTitle(request.getTitle());
@@ -137,7 +149,8 @@ public class TaskService {
      *
      * @throws IllegalArgumentException  if status is null, task not found, wrong project,
      *                                   or the transition is invalid
-     * @throws AccessDeniedException     if caller is a MEMBER who is not the task assignee
+     * @throws AccessDeniedException     if the caller is not a project member, or is a MEMBER
+     *                                   who is not the task assignee
      */
     public TaskResponse changeTaskStatus(Long projectId, UUID taskId,
                                          ChangeTaskStatusRequest request, String callerEmail) {
@@ -152,8 +165,10 @@ public class TaskService {
             throw new IllegalArgumentException("Task does not belong to project: " + projectId);
         }
 
-        // FR-13 / SR-4: only ADMIN/MANAGER or the assigned MEMBER may update status
         User caller = resolveUser(callerEmail);
+        verifyCallerProjectAccess(projectId, caller);
+
+        // FR-13 / SR-4: only ADMIN/MANAGER or the assigned MEMBER may update status
         boolean isManagerOrAbove = isManagerOrAdmin(caller.getRole());
         boolean isAssignee = Objects.equals(task.getAssigneeId(), caller.getId());
         if (!isManagerOrAbove && !isAssignee) {
@@ -179,14 +194,18 @@ public class TaskService {
      * query results (SR-9).
      *
      * @throws IllegalArgumentException if task not found or does not belong to the project
+     * @throws AccessDeniedException    if the caller is not a member of the project
      */
-    public void deleteTask(Long projectId, UUID taskId) {
+    public void deleteTask(Long projectId, UUID taskId, String callerEmail) {
         Task task = taskRepository.findByIdAndDeletedFalse(taskId)
                 .orElseThrow(() -> new IllegalArgumentException("Task not found: " + taskId));
 
         if (!task.getProjectId().equals(projectId)) {
             throw new IllegalArgumentException("Task does not belong to project: " + projectId);
         }
+
+        User caller = resolveUser(callerEmail);
+        verifyCallerProjectAccess(projectId, caller);
 
         task.setDeleted(true);
         task.setUpdatedAt(LocalDateTime.now());
@@ -202,9 +221,10 @@ public class TaskService {
      * FR-15: ADMIN and MANAGER may assign tasks to any project member or unassign them.
      * A MEMBER may only self-assign to a task that currently has no assignee.
      *
-     * @throws IllegalArgumentException if task not found, wrong project, or target user not found
-     * @throws AccessDeniedException    if caller is a MEMBER trying to assign someone else,
-     *                                  or trying to reassign an already-assigned task
+     * @throws IllegalArgumentException if task not found, wrong project, target user not found,
+     *                                  or target user is not a member of the project
+     * @throws AccessDeniedException    if the caller is not a project member, or is a MEMBER
+     *                                  trying to assign someone else or reassign an already-assigned task
      */
     public TaskResponse assignTask(Long projectId, UUID taskId,
                                    AssignTaskRequest request, String callerEmail) {
@@ -215,8 +235,10 @@ public class TaskService {
             throw new IllegalArgumentException("Task does not belong to project: " + projectId);
         }
 
-        // FR-15 / SR-4: MANAGER/ADMIN can assign anyone; MEMBER may only self-assign to unassigned tasks
         User caller = resolveUser(callerEmail);
+        verifyCallerProjectAccess(projectId, caller);
+
+        // FR-15 / SR-4: MANAGER/ADMIN can assign anyone; MEMBER may only self-assign to unassigned tasks
         if (!isManagerOrAdmin(caller.getRole())) {
             if (task.getAssigneeId() != null) {
                 throw new AccessDeniedException(
@@ -228,8 +250,15 @@ public class TaskService {
             }
         }
 
-        if (request.getAssigneeId() != null && !userRepository.existsById(request.getAssigneeId())) {
-            throw new IllegalArgumentException("User not found: " + request.getAssigneeId());
+        if (request.getAssigneeId() != null) {
+            if (!userRepository.existsById(request.getAssigneeId())) {
+                throw new IllegalArgumentException("User not found: " + request.getAssigneeId());
+            }
+            // FR-15 / SR-4: assignee must be a member (or owner) of the project
+            if (!projectRepository.isUserProjectMember(projectId, request.getAssigneeId())) {
+                throw new IllegalArgumentException(
+                        "User " + request.getAssigneeId() + " is not a member of project " + projectId);
+            }
         }
 
         task.setAssigneeId(request.getAssigneeId());
@@ -243,6 +272,21 @@ public class TaskService {
     private User resolveUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + email));
+    }
+
+    /**
+     * Enforces project-level isolation: ADMIN may operate on any project;
+     * every other role must be a member (or owner) of the project.
+     *
+     * @throws AccessDeniedException if the caller is not an ADMIN and is not a project member
+     */
+    private void verifyCallerProjectAccess(Long projectId, User caller) {
+        if ("ADMIN".equals(caller.getRole())) {
+            return; // ADMIN bypasses project membership check
+        }
+        if (!projectRepository.isUserProjectMember(projectId, caller.getId())) {
+            throw new AccessDeniedException("Caller is not a member of project: " + projectId);
+        }
     }
 
     private boolean isManagerOrAdmin(String role) {

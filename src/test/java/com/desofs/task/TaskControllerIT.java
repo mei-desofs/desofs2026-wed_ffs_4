@@ -186,7 +186,7 @@ class TaskControllerIT {
                     UUID.fromString("00000000-0000-0000-0000-000000000002"),
                     PROJECT_ID, "Task Beta", TaskStatus.IN_PROGRESS);
 
-            when(taskService.listTasksByProject(PROJECT_ID)).thenReturn(List.of(t1, t2));
+            when(taskService.listTasksByProject(eq(PROJECT_ID), eq("dev@example.com"))).thenReturn(List.of(t1, t2));
 
             mockMvc.perform(get("/api/projects/{projectId}/tasks", PROJECT_ID))
                     .andExpect(status().isOk())
@@ -200,7 +200,7 @@ class TaskControllerIT {
         @WithMockUser(username = "dev@example.com")
         @DisplayName("200 OK – returns empty list when project has no tasks")
         void listTasks_emptyProject_returns200EmptyList() throws Exception {
-            when(taskService.listTasksByProject(PROJECT_ID)).thenReturn(List.of());
+            when(taskService.listTasksByProject(eq(PROJECT_ID), eq("dev@example.com"))).thenReturn(List.of());
 
             mockMvc.perform(get("/api/projects/{projectId}/tasks", PROJECT_ID))
                     .andExpect(status().isOk())
@@ -212,7 +212,7 @@ class TaskControllerIT {
         @WithMockUser(username = "dev@example.com")
         @DisplayName("400 Bad Request – project not found")
         void listTasks_projectNotFound_returns400() throws Exception {
-            when(taskService.listTasksByProject(PROJECT_ID))
+            when(taskService.listTasksByProject(eq(PROJECT_ID), eq("dev@example.com")))
                     .thenThrow(new IllegalArgumentException("Project not found: " + PROJECT_ID));
 
             mockMvc.perform(get("/api/projects/{projectId}/tasks", PROJECT_ID))
@@ -241,7 +241,7 @@ class TaskControllerIT {
         @DisplayName("200 OK – task title and description updated")
         void updateTask_returns200() throws Exception {
             TaskResponse response = buildResponse(TASK_ID, PROJECT_ID, "Updated Title", TaskStatus.TODO);
-            when(taskService.updateTask(eq(PROJECT_ID), eq(TASK_ID), any())).thenReturn(response);
+            when(taskService.updateTask(eq(PROJECT_ID), eq(TASK_ID), any(), eq("dev@example.com"))).thenReturn(response);
 
             mockMvc.perform(put("/api/projects/{projectId}/tasks/{taskId}", PROJECT_ID, TASK_ID)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -255,7 +255,7 @@ class TaskControllerIT {
         @WithMockUser(username = "dev@example.com", roles = {"MANAGER"})
         @DisplayName("400 Bad Request – task not found")
         void updateTask_taskNotFound_returns400() throws Exception {
-            when(taskService.updateTask(eq(PROJECT_ID), eq(TASK_ID), any()))
+            when(taskService.updateTask(eq(PROJECT_ID), eq(TASK_ID), any(), eq("dev@example.com")))
                     .thenThrow(new IllegalArgumentException("Task not found: " + TASK_ID));
 
             mockMvc.perform(put("/api/projects/{projectId}/tasks/{taskId}", PROJECT_ID, TASK_ID)
@@ -269,7 +269,7 @@ class TaskControllerIT {
         @WithMockUser(username = "dev@example.com", roles = {"MANAGER"})
         @DisplayName("400 Bad Request – task does not belong to project")
         void updateTask_wrongProject_returns400() throws Exception {
-            when(taskService.updateTask(eq(PROJECT_ID), eq(TASK_ID), any()))
+            when(taskService.updateTask(eq(PROJECT_ID), eq(TASK_ID), any(), eq("dev@example.com")))
                     .thenThrow(new IllegalArgumentException("Task does not belong to project: " + PROJECT_ID));
 
             mockMvc.perform(put("/api/projects/{projectId}/tasks/{taskId}", PROJECT_ID, TASK_ID)
@@ -401,7 +401,7 @@ class TaskControllerIT {
         @WithMockUser(username = "manager@example.com", roles = {"MANAGER"})
         @DisplayName("204 No Content – task soft-deleted successfully")
         void deleteTask_returns204() throws Exception {
-            doNothing().when(taskService).deleteTask(PROJECT_ID, TASK_ID);
+            doNothing().when(taskService).deleteTask(PROJECT_ID, TASK_ID, "manager@example.com");
 
             mockMvc.perform(delete("/api/projects/{projectId}/tasks/{taskId}", PROJECT_ID, TASK_ID))
                     .andExpect(status().isNoContent());
@@ -412,7 +412,7 @@ class TaskControllerIT {
         @DisplayName("400 Bad Request – task not found")
         void deleteTask_taskNotFound_returns400() throws Exception {
             doThrow(new IllegalArgumentException("Task not found: " + TASK_ID))
-                    .when(taskService).deleteTask(PROJECT_ID, TASK_ID);
+                    .when(taskService).deleteTask(PROJECT_ID, TASK_ID, "manager@example.com");
 
             mockMvc.perform(delete("/api/projects/{projectId}/tasks/{taskId}", PROJECT_ID, TASK_ID))
                     .andExpect(status().isBadRequest())
@@ -424,7 +424,7 @@ class TaskControllerIT {
         @DisplayName("400 Bad Request – task does not belong to project")
         void deleteTask_wrongProject_returns400() throws Exception {
             doThrow(new IllegalArgumentException("Task does not belong to project: " + PROJECT_ID))
-                    .when(taskService).deleteTask(PROJECT_ID, TASK_ID);
+                    .when(taskService).deleteTask(PROJECT_ID, TASK_ID, "manager@example.com");
 
             mockMvc.perform(delete("/api/projects/{projectId}/tasks/{taskId}", PROJECT_ID, TASK_ID))
                     .andExpect(status().isBadRequest())

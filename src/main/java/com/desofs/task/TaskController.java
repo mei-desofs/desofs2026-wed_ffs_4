@@ -49,7 +49,7 @@ public class TaskController {
     @GetMapping
     public ResponseEntity<?> listTasks(@PathVariable Long projectId) {
         try {
-            List<TaskResponse> tasks = taskService.listTasksByProject(projectId);
+            List<TaskResponse> tasks = taskService.listTasksByProject(projectId, currentUserEmail());
             return ResponseEntity.ok(tasks);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
@@ -64,7 +64,7 @@ public class TaskController {
             @PathVariable UUID taskId,
             @RequestBody UpdateTaskRequest request) {
         try {
-            TaskResponse response = taskService.updateTask(projectId, taskId, request);
+            TaskResponse response = taskService.updateTask(projectId, taskId, request, currentUserEmail());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
@@ -93,7 +93,7 @@ public class TaskController {
             @PathVariable Long projectId,
             @PathVariable UUID taskId) {
         try {
-            taskService.deleteTask(projectId, taskId);
+            taskService.deleteTask(projectId, taskId, currentUserEmail());
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
