@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.desofs.project.model.Project;
@@ -61,11 +62,11 @@ public class ProjectController {
     }
 
     @GetMapping
-    public ResponseEntity<?> listProjects() {
+    public ResponseEntity<?> listProjects(@RequestParam(required = false) String status) {
         try {
             String email = getCurrentUserEmail();
             User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-            List<Project> projects = projectService.getUserProjects(user);
+            List<Project> projects = projectService.getUserProjects(user, status);
             return ResponseEntity.ok(projects);
         } catch (Exception ex) {
             return ResponseEntity.status(400).body(Map.of("error", ex.getMessage()));
