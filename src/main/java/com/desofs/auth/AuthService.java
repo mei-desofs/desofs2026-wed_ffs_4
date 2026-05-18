@@ -3,7 +3,6 @@ package com.desofs.auth;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,8 +19,6 @@ public class AuthService {
     private static final int MIN_PASSWORD_LENGTH = 8;
     private static final int MAX_LOGIN_FAILURES = 5;
     private static final java.time.Duration LOCKOUT_DURATION = java.time.Duration.ofMinutes(15);
-    private static final Pattern HAS_LETTER = Pattern.compile(".*[A-Za-z].*");
-    private static final Pattern HAS_DIGIT = Pattern.compile(".*\\d.*");
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -100,9 +97,27 @@ public class AuthService {
         if (password == null || password.length() < MIN_PASSWORD_LENGTH) {
             throw new IllegalArgumentException("Password must be at least 8 characters long");
         }
-        if (!HAS_LETTER.matcher(password).matches() || !HAS_DIGIT.matcher(password).matches()) {
+        if (!containsLetter(password) || !containsDigit(password)) {
             throw new IllegalArgumentException("Password must contain at least one letter and one digit");
         }
+    }
+
+    private boolean containsLetter(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (Character.isLetter(value.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsDigit(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (Character.isDigit(value.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static final class LoginState {
