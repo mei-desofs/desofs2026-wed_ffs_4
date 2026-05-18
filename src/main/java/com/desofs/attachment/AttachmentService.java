@@ -1,14 +1,5 @@
 package com.desofs.attachment;
 
-import com.desofs.project.model.Project;
-import com.desofs.project.repository.ProjectRepository;
-import com.desofs.audit.AuditAction;
-import com.desofs.audit.AuditService;
-import com.desofs.task.Task;
-import com.desofs.task.TaskRepository;
-import com.desofs.user.User;
-import com.desofs.user.UserRepository;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,14 +14,23 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.desofs.audit.AuditAction;
+import com.desofs.audit.AuditService;
+import com.desofs.project.model.Project;
+import com.desofs.project.repository.ProjectRepository;
+import com.desofs.task.Task;
+import com.desofs.task.TaskRepository;
+import com.desofs.user.User;
+import com.desofs.user.UserRepository;
 
 @Service
 public class AttachmentService {
