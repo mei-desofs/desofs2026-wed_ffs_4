@@ -1,13 +1,13 @@
 # Test Suite
 
-Documento com os testes atualmente existentes no projeto.
+Document listing the tests currently available in the project.
 
 ## Overview
 
-- Suite total validada: 244 testes
-- Cobertura por camadas: unitários, controller, integration e end-to-end
+- Validated total suite: 244 tests
+- Coverage by layer: unit, controller, integration, and end-to-end
 
-Nota: alguns runners mostram mais entradas por causa de classes aninhadas e relatórios separados, mas o total efetivo executado no Maven foi 244.
+Note: some runners show more entries because of nested classes and separate reports, but the effective Maven total was 244.
 
 ## Authentication
 
@@ -49,7 +49,7 @@ Nota: alguns runners mostram mais entradas por causa de classes aninhadas e rela
 
 ## Notes
 
-- Os testes de controller validam os endpoints e códigos HTTP.
-- Os testes de service validam regras de negócio e permissões.
-- Os testes de integração validam o comportamento Spring com contexto real.
-- O teste E2E valida login, criação de projeto e criação de task num fluxo real.
+- Controller tests validate endpoints and HTTP status codes.
+- Service tests validate business rules and permissions.
+- Integration tests validate Spring behavior with a real context.
+- The E2E test validates login, project creation, and task creation in a real flow.
