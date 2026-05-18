@@ -24,6 +24,8 @@ import com.desofs.task.dto.TaskDetailResponse;
 import com.desofs.task.dto.TaskResponse;
 import com.desofs.task.dto.UpdateTaskRequest;
 
+import com.desofs.task.TaskStatus;
+
 /**
  * REST controller for Task endpoints, nested under /api/projects/{projectId}/tasks.
  *
@@ -56,26 +58,25 @@ public class TaskController {
     @GetMapping
     public ResponseEntity<?> listTasks(@PathVariable Long projectId) {
         try {
-            List<TaskResponse> tasks = taskService.listTasksByProject(projectId);
+            List<TaskResponse> tasks = taskService.listTasksByProject(projectId, currentUserEmail());
             return ResponseEntity.ok(tasks);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
         }
     }
-
-    // ── FR-12: Update task ───────────────────────────────────────────────────
 
     @GetMapping(params = "status")
     public ResponseEntity<?> listTasksByStatus(@PathVariable Long projectId, @RequestParam String status) {
         try {
-            List<TaskResponse> tasks = taskService.listTasksByProject(projectId, TaskStatus.valueOf(status.trim().toUpperCase()));
+            List<TaskResponse> tasks = taskService.listTasksByProject(
+                    projectId,
+                    currentUserEmail(),
+                    TaskStatus.valueOf(status.trim().toUpperCase()));
             return ResponseEntity.ok(tasks);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
         }
     }
-
-    // ── FR-13: Change task status ────────────────────────────────────────────
 
     @GetMapping("/{taskId}")
     public ResponseEntity<?> getTask(@PathVariable Long projectId, @PathVariable UUID taskId) {
@@ -87,18 +88,14 @@ public class TaskController {
         }
     }
 
-    // ── FR-14: Soft-delete task ──────────────────────────────────────────────
-
     @PutMapping("/{taskId}")
     public ResponseEntity<?> updateTask(@PathVariable Long projectId, @PathVariable UUID taskId, @RequestBody UpdateTaskRequest request) {
         try {
-            return ResponseEntity.ok(taskService.updateTask(projectId, taskId, request));
+            return ResponseEntity.ok(taskService.updateTask(projectId, taskId, request, currentUserEmail()));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));
         }
     }
-
-    // ── FR-15: Assign task to member ─────────────────────────────────────────
 
     @PatchMapping("/{taskId}/status")
     public ResponseEntity<?> changeTaskStatus(@PathVariable Long projectId, @PathVariable UUID taskId, @RequestBody ChangeTaskStatusRequest request) {
@@ -109,12 +106,10 @@ public class TaskController {
         }
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
     @DeleteMapping("/{taskId}")
     public ResponseEntity<?> deleteTask(@PathVariable Long projectId, @PathVariable UUID taskId) {
         try {
-            taskService.deleteTask(projectId, taskId);
+            taskService.deleteTask(projectId, taskId, currentUserEmail());
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(errorBody(ex.getMessage()));

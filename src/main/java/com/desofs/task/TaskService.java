@@ -22,9 +22,9 @@ import java.util.stream.Collectors;
 /**
  * Business logic for Task management.
  *
- * FR-10 – createTask  : create a task inside an existing project.
- * FR-11 – listTasks   : list all non-deleted tasks that belong to a project.
- * FR-12 – updateTask  : edit the title and/or description of an existing task.
+ * FR-10 – createTask: create a task inside an existing project.
+ * FR-11 – listTasks: list all non-deleted tasks that belong to a project.
+ * FR-12 – updateTask: edit the title and/or description of an existing task.
  */
 @Service
 @Transactional
@@ -37,22 +37,11 @@ public class TaskService {
     public TaskService(TaskRepository taskRepository,
                        ProjectRepository projectRepository,
                        UserRepository userRepository) {
-        this.taskRepository  = taskRepository;
+        this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
-        this.userRepository  = userRepository;
+        this.userRepository = userRepository;
     }
 
-    // ── FR-10 ────────────────────────────────────────────────────────────────
-
-    /**
-     * Creates a new task in the given project.
-     *
-     * @param projectId   the project the task belongs to
-     * @param request     title (required) and optional description
-     * @param callerEmail email of the authenticated user, used to record createdBy
-     * @return the persisted task as a response DTO
-     * @throws IllegalArgumentException if title is blank or the project does not exist
-     */
     public TaskResponse createTask(Long projectId, CreateTaskRequest request, String callerEmail) {
         validateTitle(request.getTitle());
 
@@ -61,6 +50,7 @@ public class TaskService {
         }
 
         User caller = resolveUser(callerEmail);
+        verifyCallerProjectAccess(projectId, caller);
 
         Task task = new Task();
         task.setProjectId(projectId);
@@ -69,59 +59,55 @@ public class TaskService {
         task.setStatus(TaskStatus.TODO);
         task.setPriority(parsePriority(request.getPriority()));
         task.setCreatedBy(caller.getId());
+
         if (request.getAssignedTo() != null) {
-            if (!userRepository.existsById(request.getAssignedTo())) {
-                throw new IllegalArgumentException("User not found: " + request.getAssignedTo());
-            }
+            validateAssignee(projectId, request.getAssignedTo());
             task.setAssigneeId(request.getAssignedTo());
         }
 
         return TaskResponse.from(taskRepository.save(task));
     }
 
-    // ── FR-11 ────────────────────────────────────────────────────────────────
-
-    /**
-     * Lists all non-deleted tasks for a project.
-     *
-     * @param projectId the project whose tasks are requested
-     * @return list of task response DTOs (may be empty)
-     * @throws IllegalArgumentException if the project does not exist
-     */
     @Transactional(readOnly = true)
     public List<TaskResponse> listTasksByProject(Long projectId) {
-        return listTasksByProject(projectId, null);
+        return listTasksByProject(projectId, (String) null, null);
     }
 
-    // ── FR-11 (filtered) ─────────────────────────────────────────────────────
+    public List<TaskResponse> listTasksByProject(Long projectId, String callerEmail) {
+        return listTasksByProject(projectId, callerEmail, null);
+    }
 
     @Transactional(readOnly = true)
-    public List<TaskResponse> listTasksByProject(Long projectId, TaskStatus status) {
+    public List<TaskResponse> listTasksByProject(Long projectId, String callerEmail, TaskStatus status) {
         if (!projectRepository.existsById(projectId)) {
             throw new IllegalArgumentException("Project not found: " + projectId);
         }
 
-        return (status == null ? taskRepository.findByProjectIdAndDeletedFalse(projectId) : taskRepository.findByProjectIdAndDeletedFalseAndStatus(projectId, status))
+        User caller = resolveUser(callerEmail);
+        verifyCallerProjectAccess(projectId, caller);
+
+        return (status == null
+                ? taskRepository.findByProjectIdAndDeletedFalse(projectId)
+                : taskRepository.findByProjectIdAndDeletedFalseAndStatus(projectId, status))
                 .stream()
                 .map(TaskResponse::from)
                 .collect(Collectors.toList());
     }
 
-    // ── FR-12 ────────────────────────────────────────────────────────────────
-
-    /**
-     * Returns the full task details for a task in a project.
-     */
     @Transactional(readOnly = true)
     public TaskDetailResponse getTask(Long projectId, UUID taskId) {
         return TaskDetailResponse.from(getTaskOrThrow(projectId, taskId));
     }
 
-    /**
-     * Updates the title, description, priority and/or assignee of an existing task.
-     */
     public TaskResponse updateTask(Long projectId, UUID taskId, UpdateTaskRequest request) {
+        return updateTask(projectId, taskId, request, null);
+    }
+
+    public TaskResponse updateTask(Long projectId, UUID taskId, UpdateTaskRequest request, String callerEmail) {
         Task task = getTaskOrThrow(projectId, taskId);
+
+        User caller = resolveUser(callerEmail);
+        verifyCallerProjectAccess(projectId, caller);
 
         if (request.getTitle() != null) {
             validateTitle(request.getTitle());
@@ -137,9 +123,7 @@ public class TaskService {
         }
 
         if (request.getAssignedTo() != null) {
-            if (!userRepository.existsById(request.getAssignedTo())) {
-                throw new IllegalArgumentException("User not found: " + request.getAssignedTo());
-            }
+            validateAssignee(projectId, request.getAssignedTo());
             task.setAssigneeId(request.getAssignedTo());
         }
 
@@ -147,19 +131,15 @@ public class TaskService {
         return TaskResponse.from(taskRepository.save(task));
     }
 
-    // ── FR-13: Change task status ────────────────────────────────────────────
-
-    /**
-     * Advances the task status following the allowed workflow.
-     */
     public TaskResponse changeTaskStatus(Long projectId, UUID taskId, ChangeTaskStatusRequest request, String callerEmail) {
         if (request.getStatus() == null) {
             throw new IllegalArgumentException("Status must not be null");
         }
 
         Task task = getTaskOrThrow(projectId, taskId);
-
         User caller = resolveUser(callerEmail);
+        verifyCallerProjectAccess(projectId, caller);
+
         boolean isManagerOrAbove = isManagerOrAdmin(caller.getRole());
         boolean isAssignee = Objects.equals(task.getAssigneeId(), caller.getId());
         if (!isManagerOrAbove && !isAssignee) {
@@ -175,27 +155,25 @@ public class TaskService {
         return TaskResponse.from(taskRepository.save(task));
     }
 
-    // ── FR-14: Soft-delete task ──────────────────────────────────────────────
-
-    /**
-     * Soft-deletes a task — the record stays in the DB but is excluded from queries.
-     */
     public void deleteTask(Long projectId, UUID taskId) {
+        deleteTask(projectId, taskId, null);
+    }
+
+    public void deleteTask(Long projectId, UUID taskId, String callerEmail) {
         Task task = getTaskOrThrow(projectId, taskId);
+        User caller = resolveUser(callerEmail);
+        verifyCallerProjectAccess(projectId, caller);
         task.setDeleted(true);
         task.setUpdatedAt(LocalDateTime.now());
         taskRepository.save(task);
     }
 
-    // ── FR-15: Assign task to member ─────────────────────────────────────────
-
-    /**
-     * Assigns or unassigns a task to a user.
-     */
     public TaskResponse assignTask(Long projectId, UUID taskId, AssignTaskRequest request, String callerEmail) {
         Task task = getTaskOrThrow(projectId, taskId);
 
         User caller = resolveUser(callerEmail);
+        verifyCallerProjectAccess(projectId, caller);
+
         if (!isManagerOrAdmin(caller.getRole())) {
             if (request.getAssigneeId() == null || !request.getAssigneeId().equals(caller.getId())) {
                 throw new AccessDeniedException("Members may only self-assign tasks");
@@ -205,8 +183,8 @@ public class TaskService {
             }
         }
 
-        if (request.getAssigneeId() != null && !userRepository.existsById(request.getAssigneeId())) {
-            throw new IllegalArgumentException("User not found: " + request.getAssigneeId());
+        if (request.getAssigneeId() != null) {
+            validateAssignee(projectId, request.getAssigneeId());
         }
 
         task.setAssigneeId(request.getAssigneeId());
@@ -214,10 +192,21 @@ public class TaskService {
         return TaskResponse.from(taskRepository.save(task));
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
     private User resolveUser(String email) {
-        return userRepository.findByEmail(email).orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + email));
+        if (email == null) {
+            throw new IllegalStateException("Authenticated user not found: null");
+        }
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + email));
+    }
+
+    private void verifyCallerProjectAccess(Long projectId, User caller) {
+        if ("ADMIN".equals(caller.getRole())) {
+            return;
+        }
+        if (!projectRepository.isUserProjectMember(projectId, caller.getId())) {
+            throw new AccessDeniedException("Caller is not a member of project: " + projectId);
+        }
     }
 
     private void validateTitle(String title) {
@@ -230,7 +219,8 @@ public class TaskService {
     }
 
     private Task getTaskOrThrow(Long projectId, UUID taskId) {
-        Task task = taskRepository.findByIdAndDeletedFalse(taskId).orElseThrow(() -> new IllegalArgumentException("Task not found: " + taskId));
+        Task task = taskRepository.findByIdAndDeletedFalse(taskId)
+                .orElseThrow(() -> new IllegalArgumentException("Task not found: " + taskId));
         if (!task.getProjectId().equals(projectId)) {
             throw new IllegalArgumentException("Task does not belong to project: " + projectId);
         }
@@ -242,6 +232,15 @@ public class TaskService {
             return TaskPriority.MEDIUM;
         }
         return TaskPriority.valueOf(priority.trim().toUpperCase());
+    }
+
+    private void validateAssignee(Long projectId, Long assigneeId) {
+        if (!userRepository.existsById(assigneeId)) {
+            throw new IllegalArgumentException("User not found: " + assigneeId);
+        }
+        if (!projectRepository.isUserProjectMember(projectId, assigneeId)) {
+            throw new IllegalArgumentException("User " + assigneeId + " is not a member of project " + projectId);
+        }
     }
 
     private boolean isManagerOrAdmin(String role) {

@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -22,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,8 +41,8 @@ class CommentControllerTest {
     private CommentController controller;
 
     private static final String USER_EMAIL = "user@example.com";
-    private static final Long TASK_ID = 42L;
-    private static final Long COMMENT_ID = 7L;
+    private static final UUID   TASK_ID    = UUID.fromString("00000000-0000-0000-0000-000000000042");
+    private static final Long   COMMENT_ID = 7L;
 
     @BeforeEach
     void setUpSecurityContext() {
@@ -87,6 +89,17 @@ class CommentControllerTest {
         }
 
         @Test
+        @DisplayName("returns 403 on AccessDeniedException")
+        void addComment_notProjectMember_returns403() {
+            when(commentService.addComment(any(), any(), any()))
+                    .thenThrow(new AccessDeniedException("Caller is not a member of project"));
+
+            ResponseEntity<?> response = controller.addComment(TASK_ID, createRequest("Hello"));
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        }
+
+        @Test
         @DisplayName("delegates taskId and email to service correctly")
         void addComment_passesThroughTaskIdAndEmail() {
             when(commentService.addComment(any(), any(), any())).thenReturn(buildResponse(1L, TASK_ID, "x"));
@@ -110,7 +123,8 @@ class CommentControllerTest {
                     buildResponse(1L, TASK_ID, "First"),
                     buildResponse(2L, TASK_ID, "Second")
             );
-            when(commentService.getCommentsForTask(TASK_ID)).thenReturn(stub);
+            // getCommentsForTask now takes (UUID taskId, String userEmail)
+            when(commentService.getCommentsForTask(eq(TASK_ID), eq(USER_EMAIL))).thenReturn(stub);
 
             ResponseEntity<?> response = controller.getComments(TASK_ID);
 
@@ -121,7 +135,7 @@ class CommentControllerTest {
         @Test
         @DisplayName("returns 200 with empty list when no comments")
         void getComments_empty_returns200() {
-            when(commentService.getCommentsForTask(TASK_ID)).thenReturn(List.of());
+            when(commentService.getCommentsForTask(eq(TASK_ID), eq(USER_EMAIL))).thenReturn(List.of());
 
             ResponseEntity<?> response = controller.getComments(TASK_ID);
 
@@ -132,12 +146,23 @@ class CommentControllerTest {
         @Test
         @DisplayName("returns 400 on IllegalArgumentException")
         void getComments_error_returns400() {
-            when(commentService.getCommentsForTask(TASK_ID))
+            when(commentService.getCommentsForTask(eq(TASK_ID), eq(USER_EMAIL)))
                     .thenThrow(new IllegalArgumentException("Task not found"));
 
             ResponseEntity<?> response = controller.getComments(TASK_ID);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @DisplayName("returns 403 on AccessDeniedException")
+        void getComments_notProjectMember_returns403() {
+            when(commentService.getCommentsForTask(any(), any()))
+                    .thenThrow(new AccessDeniedException("Caller is not a member of project"));
+
+            ResponseEntity<?> response = controller.getComments(TASK_ID);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         }
     }
 
@@ -151,7 +176,8 @@ class CommentControllerTest {
         @DisplayName("returns 200 and updated body on success")
         void editComment_success_returns200() {
             CommentResponse stub = buildResponse(COMMENT_ID, TASK_ID, "Updated");
-            when(commentService.editComment(eq(COMMENT_ID), eq(USER_EMAIL), any(UpdateCommentRequest.class)))
+            // editComment now takes (UUID taskId, Long commentId, String userEmail, UpdateCommentRequest)
+            when(commentService.editComment(eq(TASK_ID), eq(COMMENT_ID), eq(USER_EMAIL), any(UpdateCommentRequest.class)))
                     .thenReturn(stub);
 
             ResponseEntity<?> response = controller.editComment(TASK_ID, COMMENT_ID, updateRequest("Updated"));
@@ -161,25 +187,25 @@ class CommentControllerTest {
         }
 
         @Test
-        @DisplayName("returns 400 with error body on forbidden")
-        void editComment_forbidden_returns400() {
-            when(commentService.editComment(any(), any(), any()))
-                    .thenThrow(new IllegalArgumentException("Forbidden: You can only edit your own comments"));
+        @DisplayName("returns 403 with error body on AccessDeniedException")
+        void editComment_forbidden_returns403() {
+            when(commentService.editComment(any(), any(), any(), any()))
+                    .thenThrow(new AccessDeniedException("Forbidden: You can only edit your own comments"));
 
             ResponseEntity<?> response = controller.editComment(TASK_ID, COMMENT_ID, updateRequest("Attempt"));
 
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
             assertThat(errorMessage(response)).contains("Forbidden");
         }
 
         @Test
-        @DisplayName("passes commentId (not taskId) to service")
-        void editComment_passesCommentIdToService() {
-            when(commentService.editComment(any(), any(), any())).thenReturn(buildResponse(COMMENT_ID, TASK_ID, "x"));
+        @DisplayName("passes taskId, commentId, and email to service")
+        void editComment_passesThroughAllArgs() {
+            when(commentService.editComment(any(), any(), any(), any())).thenReturn(buildResponse(COMMENT_ID, TASK_ID, "x"));
 
             controller.editComment(TASK_ID, COMMENT_ID, updateRequest("x"));
 
-            verify(commentService).editComment(eq(COMMENT_ID), eq(USER_EMAIL), any());
+            verify(commentService).editComment(eq(TASK_ID), eq(COMMENT_ID), eq(USER_EMAIL), any());
         }
     }
 
@@ -192,7 +218,8 @@ class CommentControllerTest {
         @Test
         @DisplayName("returns 204 on success")
         void deleteComment_success_returns204() {
-            doNothing().when(commentService).deleteComment(COMMENT_ID, USER_EMAIL);
+            // deleteComment now takes (UUID taskId, Long commentId, String userEmail)
+            doNothing().when(commentService).deleteComment(TASK_ID, COMMENT_ID, USER_EMAIL);
 
             ResponseEntity<?> response = controller.deleteComment(TASK_ID, COMMENT_ID);
 
@@ -201,14 +228,14 @@ class CommentControllerTest {
         }
 
         @Test
-        @DisplayName("returns 400 on forbidden")
-        void deleteComment_forbidden_returns400() {
-            doThrow(new IllegalArgumentException("Forbidden: You can only delete your own comments"))
-                    .when(commentService).deleteComment(COMMENT_ID, USER_EMAIL);
+        @DisplayName("returns 403 on AccessDeniedException")
+        void deleteComment_forbidden_returns403() {
+            doThrow(new AccessDeniedException("Forbidden: You can only delete your own comments"))
+                    .when(commentService).deleteComment(TASK_ID, COMMENT_ID, USER_EMAIL);
 
             ResponseEntity<?> response = controller.deleteComment(TASK_ID, COMMENT_ID);
 
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
             assertThat(errorMessage(response)).contains("Forbidden");
         }
 
@@ -216,7 +243,7 @@ class CommentControllerTest {
         @DisplayName("returns 400 when comment not found")
         void deleteComment_notFound_returns400() {
             doThrow(new IllegalArgumentException("Comment not found: " + COMMENT_ID))
-                    .when(commentService).deleteComment(COMMENT_ID, USER_EMAIL);
+                    .when(commentService).deleteComment(TASK_ID, COMMENT_ID, USER_EMAIL);
 
             ResponseEntity<?> response = controller.deleteComment(TASK_ID, COMMENT_ID);
 
@@ -235,8 +262,6 @@ class CommentControllerTest {
         void noAuth_throwsIllegalState() {
             SecurityContextHolder.clearContext();
 
-            // The controller throws directly in currentUserEmail() before the service is called,
-            // so no stub is needed — and IllegalStateException is NOT caught by the 400 handler.
             org.junit.jupiter.api.Assertions.assertThrows(
                     IllegalStateException.class,
                     () -> controller.addComment(TASK_ID, createRequest("Hello"))
@@ -246,8 +271,7 @@ class CommentControllerTest {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private CommentResponse buildResponse(Long id, Long taskId, String content) {
-        // Use reflection-free approach: build via the Comment entity factory
+    private CommentResponse buildResponse(Long id, UUID taskId, String content) {
         Comment c = new Comment(taskId, content, 1L);
         c.setId(id);
         c.setCreatedAt(LocalDateTime.now());
