@@ -161,14 +161,14 @@ class CommentControllerTest {
         }
 
         @Test
-        @DisplayName("returns 403 with error body on SecurityException")
-        void editComment_forbidden_returns403() {
+        @DisplayName("returns 400 with error body on forbidden")
+        void editComment_forbidden_returns400() {
             when(commentService.editComment(any(), any(), any()))
-                    .thenThrow(new SecurityException("Forbidden: You can only edit your own comments"));
+                    .thenThrow(new IllegalArgumentException("Forbidden: You can only edit your own comments"));
 
             ResponseEntity<?> response = controller.editComment(TASK_ID, COMMENT_ID, updateRequest("Attempt"));
 
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
             assertThat(errorMessage(response)).contains("Forbidden");
         }
 
@@ -201,14 +201,14 @@ class CommentControllerTest {
         }
 
         @Test
-        @DisplayName("returns 403 on SecurityException")
-        void deleteComment_forbidden_returns403() {
-            doThrow(new SecurityException("Forbidden: You can only delete your own comments"))
+        @DisplayName("returns 400 on forbidden")
+        void deleteComment_forbidden_returns400() {
+            doThrow(new IllegalArgumentException("Forbidden: You can only delete your own comments"))
                     .when(commentService).deleteComment(COMMENT_ID, USER_EMAIL);
 
             ResponseEntity<?> response = controller.deleteComment(TASK_ID, COMMENT_ID);
 
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
             assertThat(errorMessage(response)).contains("Forbidden");
         }
 

@@ -235,7 +235,7 @@ class CommentServiceTest {
 
             UpdateCommentRequest req = updateRequest("Sneaky edit");
             assertThatThrownBy(() -> commentService.editComment(10L, otherUser.getEmail(), req))
-                    .isInstanceOf(SecurityException.class)
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Forbidden");
         }
 
@@ -322,7 +322,7 @@ class CommentServiceTest {
             when(commentRepository.findActiveById(10L)).thenReturn(Optional.of(existingComment));
 
             assertThatThrownBy(() -> commentService.deleteComment(10L, otherUser.getEmail()))
-                    .isInstanceOf(SecurityException.class)
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Forbidden");
         }
 
