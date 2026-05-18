@@ -1,10 +1,10 @@
 package com.desofs.task.dto;
 
-import com.desofs.task.Task;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import com.desofs.task.Task;
 
 public class TaskDetailResponse {
     private UUID id;
@@ -45,8 +45,12 @@ public class TaskDetailResponse {
     public Long getCreatedBy() { return createdBy; }
     public java.time.LocalDateTime getCreatedAt() { return createdAt; }
     public java.time.LocalDateTime getUpdatedAt() { return updatedAt; }
-    public List<Map<String, Object>> getComments() { return comments; }
-    public void setComments(List<Map<String, Object>> comments) { this.comments = comments; }
-    public List<Map<String, Object>> getAttachments() { return attachments; }
-    public void setAttachments(List<Map<String, Object>> attachments) { this.attachments = attachments; }
+    public List<Map<String, Object>> getComments() { return List.copyOf(comments); }
+    public void setComments(List<Map<String, Object>> comments) {
+        this.comments = comments == null ? List.of() : List.copyOf(comments);
+    }
+    public List<Map<String, Object>> getAttachments() { return List.copyOf(attachments); }
+    public void setAttachments(List<Map<String, Object>> attachments) {
+        this.attachments = attachments == null ? List.of() : List.copyOf(attachments);
+    }
 }
