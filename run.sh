@@ -19,8 +19,30 @@ start_db() {
   echo "[OK] Postgres started."
 }
 
+reset_db() {
+  echo "[1/3] Resetting Postgres data..."
+  (cd "$ROOT_DIR" && $COMPOSE_CMD down -v --remove-orphans >/dev/null 2>&1 || true)
+  echo "[OK] Postgres data reset."
+}
+
+wait_for_db() {
+  echo "[2/3] Waiting for Postgres to be ready..."
+  local attempts=30
+  while [[ $attempts -gt 0 ]]; do
+    if (cd "$ROOT_DIR" && $COMPOSE_CMD exec -T db pg_isready -U postgres -d desofs) >/dev/null 2>&1; then
+      echo "[OK] Postgres is ready."
+      return 0
+    fi
+    sleep 2
+    attempts=$((attempts - 1))
+  done
+
+  echo "[ERROR] Postgres did not become ready in time." >&2
+  exit 1
+}
+
 start_api() {
-  echo "[2/3] Starting Spring Boot..."
+  echo "[3/3] Starting Spring Boot..."
   cd "$ROOT_DIR"
   mvn spring-boot:run
 }
@@ -49,7 +71,9 @@ EOF
 
 case "$MODE" in
   all)
+    reset_db
     start_db
+    wait_for_db
     show_smoke_commands
     start_api
     ;;
