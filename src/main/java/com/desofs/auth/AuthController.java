@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.desofs.audit.AuditAction;
+import com.desofs.audit.AuditService;
 import com.desofs.security.JwtUtil;
 import com.desofs.security.TokenBlacklistService;
 import com.desofs.user.User;
@@ -23,21 +25,25 @@ public class AuthController {
     private final AuthService authService;
     private final JwtUtil jwtUtil;
     private final TokenBlacklistService tokenBlacklistService;
+    private final AuditService auditService;
 
-    public AuthController(AuthService authService, JwtUtil jwtUtil, TokenBlacklistService tokenBlacklistService) {
+    public AuthController(AuthService authService, JwtUtil jwtUtil, TokenBlacklistService tokenBlacklistService, AuditService auditService) {
         this.authService = authService;
         this.jwtUtil = jwtUtil;
         this.tokenBlacklistService = tokenBlacklistService;
+        this.auditService = auditService;
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
         try {
-            String email = body.get("email");
+            String email = resolveLoginIdentifier(body);
             String password = body.get("password");
             User user = authService.register(email, password);
+            auditService.record(email, AuditAction.REGISTER, "user", String.valueOf(user.getId()), true, "User registered");
             return ResponseEntity.status(201).body(Map.of("id", user.getId(), "email", user.getEmail()));
         } catch (Exception ex) {
+            auditService.record(resolveLoginIdentifier(body), AuditAction.REGISTER, "user", "-", false, ex.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }
     }
@@ -45,11 +51,16 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
         try {
-            String email = body.get("email");
+            String email = resolveLoginIdentifier(body);
             String password = body.get("password");
             Map<String, String> tokens = authService.login(email, password);
             return ResponseEntity.ok(tokens);
         } catch (Exception ex) {
+            if (ex instanceof AccountLockedException) {
+                auditService.record(resolveLoginIdentifier(body), AuditAction.LOCKOUT, "auth", "-", false, ex.getMessage());
+                return ResponseEntity.status(429).body(Map.of("error", ex.getMessage()));
+            }
+            auditService.record(resolveLoginIdentifier(body), AuditAction.LOGIN_FAILURE, "auth", "-", false, ex.getMessage());
             return ResponseEntity.status(401).body(Map.of("error", ex.getMessage()));
         }
     }
@@ -75,9 +86,19 @@ public class AuthController {
         try {
             Jws<Claims> claims = jwtUtil.validate(token);
             tokenBlacklistService.blacklist(token, claims.getBody().getExpiration().toInstant());
+            auditService.record(claims.getBody().getSubject(), AuditAction.LOGOUT, "auth", claims.getBody().getSubject(), true, "Logged out");
             return ResponseEntity.ok(Map.of("message", "Logged out"));
         } catch (JwtException ex) {
+            auditService.record("unknown", AuditAction.LOGOUT, "auth", "-", false, ex.getMessage());
             return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
         }
+    }
+
+    private String resolveLoginIdentifier(Map<String, String> body) {
+        String username = body.get("username");
+        if (username != null && !username.isBlank()) {
+            return username;
+        }
+        return body.get("email");
     }
 }
