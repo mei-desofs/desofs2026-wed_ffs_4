@@ -49,6 +49,6 @@ App starts on `http://localhost:8080`.
 
 ## Table of Contents
 
-[Phase 1 Report](Deliverables/Phase1/Phase1_Report.md)
-[Phase 2 Report](Deliverables/Phase2/Phase2_Report.md)
+- [Phase 1 Report](Deliverables/Phase1/Phase1_Report.md)
+- [Phase 2 Report](Deliverables/Phase2/Phase2_Sprint1_Report.md)
 
