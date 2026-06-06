@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.desofs.audit.AuditAction;
 import com.desofs.audit.AuditService;
+import com.desofs.security.TokenBlacklistService;
 
 @Service
 public class UserService {
@@ -13,10 +14,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final AuditService auditService;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public UserService(UserRepository userRepository, AuditService auditService) {
+    public UserService(UserRepository userRepository, AuditService auditService, TokenBlacklistService tokenBlacklistService) {
         this.userRepository = userRepository;
         this.auditService = auditService;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     public User updateRole(Long userId, String role) {
@@ -71,5 +74,19 @@ public class UserService {
         if (auditService != null) {
             auditService.record(actor, action, resourceType, resourceId, success, details);
         }
+    }
+    public void terminateUserSessions(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        tokenBlacklistService.blacklistAllForUser(user.getEmail());
+        recordAudit(user.getEmail(), AuditAction.SESSION_TERMINATE, "auth",
+                String.valueOf(userId), true, "All sessions terminated by admin");
+    }
+
+    public void terminateAllSessions() {
+        userRepository.findAll().forEach(user ->
+                tokenBlacklistService.blacklistAllForUser(user.getEmail()));
+        recordAudit("admin", AuditAction.SESSION_TERMINATE, "auth",
+                "all", true, "All user sessions terminated by admin");
     }
 }

@@ -22,11 +22,21 @@ public class TokenBlacklist {
     @Column(nullable = false)
     private Instant expiresAt;
 
+    @Column(name = "user_email")
+    private String userEmail;
+
+
     public TokenBlacklist() {}
 
     public TokenBlacklist(String token, Instant expiresAt) {
         this.token = token;
         this.expiresAt = expiresAt;
+    }
+    // construtor com email
+    public TokenBlacklist(String token, Instant expiresAt, String userEmail) {
+        this.token = token;
+        this.expiresAt = expiresAt;
+        this.userEmail = userEmail;
     }
 
     public Long getId() { return id; }
@@ -35,4 +45,6 @@ public class TokenBlacklist {
     public void setToken(String token) { this.token = token; }
     public Instant getExpiresAt() { return expiresAt; }
     public void setExpiresAt(Instant expiresAt) { this.expiresAt = expiresAt; }
+    public String getUserEmail() { return userEmail; }
+    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
 }

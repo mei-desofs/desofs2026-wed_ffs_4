@@ -26,11 +26,20 @@ public class TokenBlacklistService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public boolean isBlacklisted(String token) {
-        if (token == null || token.isBlank()) {
-            return false;
-        }
-        return repository.existsByToken(token);
+    @Transactional
+    public void blacklistAllForUser(String userEmail) {
+        repository.deleteByUserEmail(userEmail);
+        TokenBlacklist entry = new TokenBlacklist("revoke-all:" + userEmail, Instant.now().plus(java.time.Duration.ofDays(1)), userEmail);
+        repository.save(entry);
     }
+
+    @Transactional(readOnly = true)
+    public boolean isUserRevoked(String userEmail) {
+        return repository.existsByUserEmail(userEmail);
+    }
+    
+    public boolean isBlacklisted(String token) {
+    if (token == null || token.isBlank()) return false;
+    return repository.existsByToken(token);
+}
 }
