@@ -17,6 +17,7 @@
             <Class name="com.desofs.project.controller.ProjectController"/>
             <Class name="com.desofs.project.controller.ProjectMemberController"/>
             <Class name="com.desofs.task.TaskController"/>
+            <Class name="com.desofs.security.TokenBlacklistService"/>
         </Or>
     </Match>
 
