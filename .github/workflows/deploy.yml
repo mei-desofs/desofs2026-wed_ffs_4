@@ -31,7 +31,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: o-teu-utilizador-dockerhub/desofs-app
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/desofs-app
           tags: |
             type=semver,pattern={{version}}
             latest
