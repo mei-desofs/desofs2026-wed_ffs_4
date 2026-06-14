@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.desofs.security.ForbiddenPasswordWords;
 import com.desofs.user.User;
 import com.desofs.user.UserRepository;
 
@@ -27,9 +28,12 @@ class AuthServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private ForbiddenPasswordWords forbiddenPasswords;
 
     @InjectMocks
     private AuthService authService;
+
 
     @Test
     void registerShouldCreateUserWithEncodedPasswordAndUserRole() {

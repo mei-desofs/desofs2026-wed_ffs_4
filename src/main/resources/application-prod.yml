@@ -13,12 +13,12 @@ spring:
       max-request-size: 25MB
 
 server:
-  port: 8080
-  error:
-    include-message: never
-    include-stacktrace: never
-    include-exception: false
-    include-binding-errors: never
+  port: 8443
+  ssl:
+    enabled: true
+    key-store: classpath:keystore.p12
+    key-store-password: ${SSL_KEYSTORE_PASSWORD}
+    key-store-type: PKCS12
 
 jwt:
   secret: change_this_to_a_long_random_secret_for_dev_purposes_only

@@ -4,4 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TokenBlacklistRepository extends JpaRepository<TokenBlacklist, Long> {
     boolean existsByToken(String token);
+    void deleteByUserEmail(String userEmail);
+    boolean existsByUserEmail(String userEmail);
 }
