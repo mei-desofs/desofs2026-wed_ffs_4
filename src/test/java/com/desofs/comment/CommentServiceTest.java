@@ -485,6 +485,182 @@ class CommentServiceTest {
         }
     }
 
+
+    @Nested
+    class EdgeCasesAndBranches {
+
+        @Test
+        @DisplayName("validateContent accepts exactly 5000 character content")
+        void validateContent_maxLength_succeeds() {
+            stubTaskAccess(TASK_UUID, author);
+            when(userRepository.findByEmail(author.getEmail())).thenReturn(Optional.of(author));
+            when(commentRepository.save(any(Comment.class))).thenReturn(existingComment);
+
+            String maxContent = "x".repeat(5000);
+            assertThatCode(() -> commentService.addComment(TASK_UUID, author.getEmail(), createRequest(maxContent)))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("isManagerOrAdmin returns true for MANAGER role")
+        void userWithManagerRole_isManagerOrAdmin_true() {
+            stubTaskAccess(TASK_UUID, manager);
+            when(userRepository.findByEmail(manager.getEmail())).thenReturn(Optional.of(manager));
+            when(commentRepository.findActiveById(10L)).thenReturn(Optional.of(existingComment));
+            when(commentRepository.save(any())).thenReturn(existingComment);
+
+            assertThatCode(() -> commentService.editComment(TASK_UUID, 10L, manager.getEmail(), updateRequest("Manager edit")))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("isManagerOrAdmin returns true for ADMIN role")
+        void userWithAdminRole_isManagerOrAdmin_true() {
+            when(taskRepository.findByIdAndDeletedFalse(TASK_UUID)).thenReturn(Optional.of(testTask));
+            when(userRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
+            when(commentRepository.findActiveById(10L)).thenReturn(Optional.of(existingComment));
+            when(commentRepository.save(any())).thenReturn(existingComment);
+
+            assertThatCode(() -> commentService.editComment(TASK_UUID, 10L, admin.getEmail(), updateRequest("Admin edit")))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("deleteComment with admin user succeeds")
+        void deleteComment_byAdmin_succeeds() {
+            when(taskRepository.findByIdAndDeletedFalse(TASK_UUID)).thenReturn(Optional.of(testTask));
+            when(userRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
+            when(commentRepository.findActiveById(10L)).thenReturn(Optional.of(existingComment));
+            when(commentRepository.save(any())).thenReturn(existingComment);
+
+            assertThatCode(() -> commentService.deleteComment(TASK_UUID, 10L, admin.getEmail()))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("verifyCallerProjectAccess bypasses check for ADMIN")
+        void adminBypassesProjectMembershipCheck() {
+            when(taskRepository.findByIdAndDeletedFalse(TASK_UUID)).thenReturn(Optional.of(testTask));
+            when(userRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
+            when(commentRepository.save(any(Comment.class))).thenReturn(existingComment);
+
+            CommentResponse response = commentService.addComment(TASK_UUID, admin.getEmail(), createRequest("Admin comment"));
+
+            assertThat(response).isNotNull();
+            verify(projectRepository, never()).isUserProjectMember(PROJECT_ID, admin.getId());
+        }
+
+        @Test
+        @DisplayName("extractMentions with complex mentions")
+        void extractMentions_complexPatterns() {
+            Set<String> mentions = commentService.extractMentions("@alice123 @bob_smith @user-test");
+            assertThat(mentions).contains("alice123", "bob_smith", "user");
+        }
+
+        @Test
+        @DisplayName("extractMentions ignores invalid mention patterns")
+        void extractMentions_ignoresSymbols() {
+            Set<String> mentions = commentService.extractMentions("@#$$ @@@@ @@user");
+            assertThat(mentions).doesNotContain("#$$", "@@");
+        }
+
+        @Test
+        @DisplayName("validateContent with content of exactly 1 character succeeds")
+        void validateContent_minLength_succeeds() {
+            stubTaskAccess(TASK_UUID, author);
+            when(userRepository.findByEmail(author.getEmail())).thenReturn(Optional.of(author));
+            when(commentRepository.save(any(Comment.class))).thenReturn(existingComment);
+
+            assertThatCode(() -> commentService.addComment(TASK_UUID, author.getEmail(), createRequest("x")))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("getCommentsForTask checks project membership for non-admin")
+        void getCommentsForTask_verifies_projectAccess() {
+            stubTaskAccess(TASK_UUID, author);
+            when(userRepository.findByEmail(author.getEmail())).thenReturn(Optional.of(author));
+            when(commentRepository.findByTaskId(TASK_UUID)).thenReturn(List.of(existingComment));
+
+            commentService.getCommentsForTask(TASK_UUID, author.getEmail());
+
+            verify(projectRepository).isUserProjectMember(PROJECT_ID, author.getId());
+        }
+
+        @Test
+        @DisplayName("editComment throws when comment found but belongs to different task")
+        void editComment_wrongTaskId_throwsIllegalArgument() {
+            stubTaskAccess(TASK_UUID, author);
+            when(userRepository.findByEmail(author.getEmail())).thenReturn(Optional.of(author));
+            Comment differentTaskComment = buildComment(10L, OTHER_TASK_UUID, "Original", author.getId());
+            when(commentRepository.findActiveById(10L)).thenReturn(Optional.of(differentTaskComment));
+
+            assertThatThrownBy(() -> commentService.editComment(TASK_UUID, 10L, author.getEmail(), updateRequest("New")))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("does not belong to task");
+        }
+
+        @Test
+        @DisplayName("deleteComment throws when comment belongs to different task")
+        void deleteComment_wrongTaskId_throwsIllegalArgument() {
+            stubTaskAccess(TASK_UUID, author);
+            when(userRepository.findByEmail(author.getEmail())).thenReturn(Optional.of(author));
+            Comment differentTaskComment = buildComment(10L, OTHER_TASK_UUID, "Original", author.getId());
+            when(commentRepository.findActiveById(10L)).thenReturn(Optional.of(differentTaskComment));
+
+            assertThatThrownBy(() -> commentService.deleteComment(TASK_UUID, 10L, author.getEmail()))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("does not belong to task");
+        }
+
+        @Test
+        @DisplayName("resolveTask throws with proper task not found message")
+        void resolveTask_notFound_throwsWithTaskId() {
+            when(taskRepository.findByIdAndDeletedFalse(TASK_UUID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> commentService.addComment(TASK_UUID, author.getEmail(), createRequest("Valid")))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Task not found")
+                    .hasMessageContaining(TASK_UUID.toString());
+        }
+
+        @Test
+        @DisplayName("resolveUser throws when user not found in database")
+        void resolveUser_notFound_throwsWithEmail() {
+            when(taskRepository.findByIdAndDeletedFalse(TASK_UUID)).thenReturn(Optional.of(testTask));
+            when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> commentService.addComment(TASK_UUID, "unknown@example.com", createRequest("Valid")))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("unknown@example.com");
+        }
+
+        @Test
+        @DisplayName("editComment with manager role on non-author comment succeeds")
+        void editComment_byManagerOnOthersComment_succeeds() {
+            stubTaskAccess(TASK_UUID, manager);
+            when(userRepository.findByEmail(manager.getEmail())).thenReturn(Optional.of(manager));
+            when(commentRepository.findActiveById(10L)).thenReturn(Optional.of(existingComment));
+            when(commentRepository.save(any())).thenReturn(existingComment);
+
+            CommentResponse response = commentService.editComment(TASK_UUID, 10L, manager.getEmail(), updateRequest("Manager modified"));
+
+            assertThat(response).isNotNull();
+        }
+
+        @Test
+        @DisplayName("deleteComment with manager role on non-author comment succeeds")
+        void deleteComment_byManagerOnOthersComment_succeeds() {
+            stubTaskAccess(TASK_UUID, manager);
+            when(userRepository.findByEmail(manager.getEmail())).thenReturn(Optional.of(manager));
+            when(commentRepository.findActiveById(10L)).thenReturn(Optional.of(existingComment));
+            when(commentRepository.save(any())).thenReturn(existingComment);
+
+            assertThatCode(() -> commentService.deleteComment(TASK_UUID, 10L, manager.getEmail()))
+                    .doesNotThrowAnyException();
+        }
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private User buildUser(Long id, String email, String role) {
