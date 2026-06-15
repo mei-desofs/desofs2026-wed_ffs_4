@@ -1,6 +1,6 @@
 package com.desofs.project.model;
 
-import com.desofs.user.User;
+import com.desofs.user.model.User;
 import jakarta.persistence.*;
 import java.util.Collections;
 import java.util.HashSet;

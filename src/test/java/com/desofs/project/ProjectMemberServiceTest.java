@@ -16,8 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.desofs.project.model.Project;
 import com.desofs.project.repository.ProjectRepository;
 import com.desofs.project.service.ProjectMemberService;
-import com.desofs.user.User;
-import com.desofs.user.UserRepository;
+import com.desofs.user.model.User;
+import com.desofs.user.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectMemberServiceTest {

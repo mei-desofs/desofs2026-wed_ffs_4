@@ -1,6 +1,6 @@
 package com.desofs.comment.dto;
 
-import com.desofs.comment.Comment;
+import com.desofs.comment.model.Comment;
 import org.springframework.web.util.HtmlUtils;
 
 import java.time.LocalDateTime;

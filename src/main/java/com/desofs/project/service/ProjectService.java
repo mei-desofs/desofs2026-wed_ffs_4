@@ -5,11 +5,11 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.desofs.audit.AuditAction;
-import com.desofs.audit.AuditService;
+import com.desofs.audit.model.AuditAction;
+import com.desofs.audit.service.AuditService;
 import com.desofs.project.model.Project;
 import com.desofs.project.repository.ProjectRepository;
-import com.desofs.user.User;
+import com.desofs.user.model.User;
 
 @Service
 public class ProjectService {

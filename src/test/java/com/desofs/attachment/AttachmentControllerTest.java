@@ -1,5 +1,10 @@
 package com.desofs.attachment;
 
+import com.desofs.attachment.controller.AttachmentController;
+import com.desofs.attachment.model.Attachment;
+import com.desofs.attachment.model.AttachmentDownload;
+import com.desofs.attachment.model.AttachmentResponse;
+import com.desofs.attachment.service.AttachmentService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

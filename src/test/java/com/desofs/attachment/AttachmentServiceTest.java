@@ -1,11 +1,16 @@
 package com.desofs.attachment;
 
+import com.desofs.attachment.model.Attachment;
+import com.desofs.attachment.model.AttachmentDownload;
+import com.desofs.attachment.model.AttachmentStorageProperties;
+import com.desofs.attachment.repository.AttachmentRepository;
+import com.desofs.attachment.service.AttachmentService;
 import com.desofs.project.model.Project;
 import com.desofs.project.repository.ProjectRepository;
-import com.desofs.task.Task;
-import com.desofs.task.TaskRepository;
-import com.desofs.user.User;
-import com.desofs.user.UserRepository;
+import com.desofs.task.model.Task;
+import com.desofs.task.repository.TaskRepository;
+import com.desofs.user.model.User;
+import com.desofs.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

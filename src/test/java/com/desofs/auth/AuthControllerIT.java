@@ -2,6 +2,7 @@ package com.desofs.auth;
 
 import java.util.Map;
 
+import com.desofs.auth.service.AuthService;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -23,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.desofs.security.JwtUtil;
 import com.desofs.security.TokenBlacklistService;
-import com.desofs.user.User;
+import com.desofs.user.model.User;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
