@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.desofs.audit.AuditAction;
 import com.desofs.audit.AuditService;
@@ -15,6 +16,7 @@ import com.desofs.user.User;
 import com.desofs.user.UserRepository;
 
 @Service
+@Transactional
 public class AuthService {
     private static final int MIN_PASSWORD_LENGTH = 8;
     private static final int MAX_LOGIN_FAILURES = 5;
