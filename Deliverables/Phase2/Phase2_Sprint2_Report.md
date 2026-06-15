@@ -311,40 +311,4 @@ Template location: `.github/pull_request_template.md`
 
 ## 7. ASVS Completeness & Traceability
 
-### 7.1 ASVS Verification Summary
 
-**Reference Document:** [ASVS_Traceability.md](09_ASVS_Traceability.md)
-
-| ASVS Level | Coverage | Status | Details |
-|-----------|----------|--------|---------|
-| V1 Architecture | 100% | ✅ | [Details](09_ASVS_Traceability.md#v1) |
-| V2 Authentication | 100% | ✅ | [Details](09_ASVS_Traceability.md#v2) |
-| V3 Session Mgmt | 100% | ✅ | [Details](09_ASVS_Traceability.md#v3) |
-| V4 Access Control | 100% | ✅ | [Details](09_ASVS_Traceability.md#v4) |
-| V5 Validation | 100% | ✅ | [Details](09_ASVS_Traceability.md#v5) |
-| V8 Data Protection | 95% | 🟡 | [Details](09_ASVS_Traceability.md#v8) |
-| V9 Communication | 100% | ✅ | [Details](09_ASVS_Traceability.md#v9) |
-| V10 Malicious Input | 100% | ✅ | [Details](09_ASVS_Traceability.md#v10) |
-| **OVERALL** | **98%** | ✅ | **Excellent** |
-
-### 7.2 Test-to-Requirement Traceability
-
-**Key Mappings:**
-
-```
-Phase 1 Security Requirements → Phase 2 Test Evidence
-
-SR-1 (Password Hashing) → 
-  - Phase1/06_SecurityTesting.md (Auth Tests)
-  - src/test/java/.../AuthServiceTest.java
-  - CI/CD: ✅ All tests pass
-
-SR-2 (RBAC) → 
-  - Phase1/06_SecurityTesting.md (Authorization Tests)
-  - src/test/java/.../AuthControllerIntegrationTest.java
-  - CI/CD: ✅ All tests pass
-
-... [See full mapping in ASVS_Traceability.md]
-```
-
-**[See Complete Traceability Matrix](09_ASVS_Traceability.md)**
