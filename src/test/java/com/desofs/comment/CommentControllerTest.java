@@ -1,8 +1,11 @@
 package com.desofs.comment;
 
+import com.desofs.comment.controller.CommentController;
 import com.desofs.comment.dto.CommentResponse;
 import com.desofs.comment.dto.CreateCommentRequest;
 import com.desofs.comment.dto.UpdateCommentRequest;
+import com.desofs.comment.model.Comment;
+import com.desofs.comment.service.CommentService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

@@ -4,8 +4,8 @@ import org.springframework.stereotype.Service;
 
 import com.desofs.project.model.Project;
 import com.desofs.project.repository.ProjectRepository;
-import com.desofs.user.User;
-import com.desofs.user.UserRepository;
+import com.desofs.user.model.User;
+import com.desofs.user.repository.UserRepository;
 
 @Service
 public class ProjectMemberService {

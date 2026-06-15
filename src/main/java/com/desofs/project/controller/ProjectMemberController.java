@@ -13,13 +13,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.desofs.audit.AuditAction;
-import com.desofs.audit.AuditService;
+import com.desofs.audit.model.AuditAction;
+import com.desofs.audit.service.AuditService;
 import com.desofs.project.dto.ProjectMemberRequest;
 import com.desofs.project.model.Project;
 import com.desofs.project.service.ProjectMemberService;
-import com.desofs.user.User;
-import com.desofs.user.UserRepository;
+import com.desofs.user.model.User;
+import com.desofs.user.repository.UserRepository;
 
 @RestController
 @RequestMapping("/api/projects/{projectId}/members")

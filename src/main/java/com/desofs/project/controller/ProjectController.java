@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.desofs.project.model.Project;
 import com.desofs.project.service.ProjectService;
-import com.desofs.user.User;
-import com.desofs.user.UserRepository;
+import com.desofs.user.model.User;
+import com.desofs.user.repository.UserRepository;
 
 @RestController
 @RequestMapping("/api/projects")
