@@ -1,6 +1,9 @@
 package com.desofs.audit;
 
-import org.junit.jupiter.api.BeforeEach;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -9,8 +12,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import com.desofs.audit.model.AuditAction;
+import com.desofs.audit.model.AuditEvent;
+import com.desofs.audit.repository.AuditEventRepository;
+import com.desofs.audit.service.AuditService;
 
 /**
  * Unit tests for {@link AuditService}.
@@ -33,7 +38,8 @@ class AuditServiceTest {
         @Test
         @DisplayName("saves audit event with all parameters provided")
         void record_allParameters_saves() {
-            auditService.record("user@example.com", AuditAction.PROJECT_CREATE, "project", "123", true, "Project created");
+            auditService.record("user@example.com", AuditAction.PROJECT_CREATE, "project", "123", true,
+                    "Project created");
 
             verify(auditEventRepository).save(any(AuditEvent.class));
         }
@@ -57,7 +63,8 @@ class AuditServiceTest {
         @Test
         @DisplayName("saves audit event when resourceId is null and converts to '-'")
         void record_nullResourceId_convertsToDash() {
-            auditService.record("user@example.com", AuditAction.PROJECT_DELETE, "project", null, true, "Project deleted");
+            auditService.record("user@example.com", AuditAction.PROJECT_DELETE, "project", null, true,
+                    "Project deleted");
 
             verify(auditEventRepository).save(any(AuditEvent.class));
         }
@@ -65,7 +72,8 @@ class AuditServiceTest {
         @Test
         @DisplayName("saves audit event with details parameter")
         void record_withDetails_saves() {
-            auditService.record("manager@example.com", AuditAction.PROJECT_UPDATE, "project", "999", true, "Project fields updated");
+            auditService.record("manager@example.com", AuditAction.PROJECT_UPDATE, "project", "999", true,
+                    "Project fields updated");
 
             verify(auditEventRepository).save(any(AuditEvent.class));
         }
@@ -84,7 +92,8 @@ class AuditServiceTest {
         @Test
         @DisplayName("saves audit event with success=false for failed actions")
         void record_unsuccessfulAction_saves() {
-            auditService.record("user@example.com", AuditAction.PROJECT_DELETE, "project", "200", false, "Deletion failed");
+            auditService.record("user@example.com", AuditAction.PROJECT_DELETE, "project", "200", false,
+                    "Deletion failed");
 
             verify(auditEventRepository).save(any(AuditEvent.class));
         }
@@ -122,4 +131,3 @@ class AuditServiceTest {
         }
     }
 }
-

@@ -9,8 +9,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.desofs.audit.AuditAction;
-import com.desofs.audit.AuditService;
+import com.desofs.audit.model.AuditAction;
+import com.desofs.audit.service.AuditService;
 
 import jakarta.servlet.http.HttpServletRequest;
 

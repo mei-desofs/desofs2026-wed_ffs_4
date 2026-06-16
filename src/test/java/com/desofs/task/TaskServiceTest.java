@@ -1,18 +1,21 @@
 package com.desofs.task;
 
-import com.desofs.project.repository.ProjectRepository;
-import com.desofs.task.dto.AssignTaskRequest;
-import com.desofs.task.dto.ChangeTaskStatusRequest;
-import com.desofs.task.dto.CreateTaskRequest;
-import com.desofs.task.dto.TaskDetailResponse;
-import com.desofs.task.dto.TaskResponse;
-import com.desofs.task.dto.UpdateTaskRequest;
-import com.desofs.task.model.Task;
-import com.desofs.task.model.TaskStatus;
-import com.desofs.task.repository.TaskRepository;
-import com.desofs.task.service.TaskService;
-import com.desofs.user.model.User;
-import com.desofs.user.repository.UserRepository;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,15 +26,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import com.desofs.project.repository.ProjectRepository;
+import com.desofs.task.dto.AssignTaskRequest;
+import com.desofs.task.dto.ChangeTaskStatusRequest;
+import com.desofs.task.dto.CreateTaskRequest;
+import com.desofs.task.dto.TaskDetailResponse;
+import com.desofs.task.dto.TaskResponse;
+import com.desofs.task.dto.UpdateTaskRequest;
+import com.desofs.task.model.Task;
+import com.desofs.task.model.TaskPriority;
+import com.desofs.task.model.TaskStatus;
+import com.desofs.task.repository.TaskRepository;
+import com.desofs.task.service.TaskService;
+import com.desofs.user.model.User;
+import com.desofs.user.repository.UserRepository;
 
 /**
  * Unit tests for {@link TaskService}.
@@ -43,20 +51,23 @@ import static org.mockito.Mockito.*;
 @SuppressWarnings("unused")
 class TaskServiceTest {
 
-    @Mock private TaskRepository taskRepository;
-    @Mock private ProjectRepository projectRepository;
-    @Mock private UserRepository    userRepository;
+    @Mock
+    private TaskRepository taskRepository;
+    @Mock
+    private ProjectRepository projectRepository;
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private TaskService taskService;
 
     // ── Shared fixtures ──────────────────────────────────────────────────────
 
-    private static final Long   PROJECT_ID    = 1L;
-    private static final Long   OTHER_PROJECT = 99L;
-    private static final UUID   TASK_ID       = UUID.randomUUID();
-    private static final String CALLER_EMAIL  = "dev@example.com";
-    private static final Long   CALLER_ID     = 42L;
+    private static final Long PROJECT_ID = 1L;
+    private static final Long OTHER_PROJECT = 99L;
+    private static final UUID TASK_ID = UUID.randomUUID();
+    private static final String CALLER_EMAIL = "dev@example.com";
+    private static final Long CALLER_ID = 42L;
 
     private User caller;
 
@@ -127,7 +138,7 @@ class TaskServiceTest {
         void nullTitle_throws() {
             req.setTitle(null);
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+                    () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
             verify(taskRepository, never()).save(any());
         }
@@ -137,7 +148,7 @@ class TaskServiceTest {
         void blankTitle_throws() {
             req.setTitle("   ");
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+                    () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
             verify(taskRepository, never()).save(any());
         }
@@ -147,7 +158,7 @@ class TaskServiceTest {
         void titleTooLong_throws() {
             req.setTitle("x".repeat(256));
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+                    () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
             verify(taskRepository, never()).save(any());
         }
@@ -157,7 +168,7 @@ class TaskServiceTest {
         void projectNotFound_throws() {
             when(projectRepository.existsById(PROJECT_ID)).thenReturn(false);
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+                    () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
             verify(taskRepository, never()).save(any());
         }
@@ -168,7 +179,7 @@ class TaskServiceTest {
             when(projectRepository.existsById(PROJECT_ID)).thenReturn(true);
             when(userRepository.findByEmail(CALLER_EMAIL)).thenReturn(Optional.empty());
             IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+                    () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
             verify(taskRepository, never()).save(any());
         }
@@ -179,7 +190,7 @@ class TaskServiceTest {
             when(projectRepository.existsById(PROJECT_ID)).thenReturn(true);
             stubManagerCallerNotMember();
             assertThrows(AccessDeniedException.class,
-                () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
+                    () -> taskService.createTask(PROJECT_ID, req, CALLER_EMAIL));
             verify(taskRepository, never()).save(any());
         }
 
@@ -230,7 +241,7 @@ class TaskServiceTest {
         void projectNotFound_throws() {
             when(projectRepository.existsById(PROJECT_ID)).thenReturn(false);
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.listTasksByProject(PROJECT_ID, CALLER_EMAIL));
+                    () -> taskService.listTasksByProject(PROJECT_ID, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -240,7 +251,7 @@ class TaskServiceTest {
             when(projectRepository.existsById(PROJECT_ID)).thenReturn(true);
             stubManagerCallerNotMember();
             assertThrows(AccessDeniedException.class,
-                () -> taskService.listTasksByProject(PROJECT_ID, CALLER_EMAIL));
+                    () -> taskService.listTasksByProject(PROJECT_ID, CALLER_EMAIL));
         }
 
         @Test
@@ -290,7 +301,7 @@ class TaskServiceTest {
         void taskNotFound_throws() {
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.empty());
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.updateTask(PROJECT_ID, TASK_ID, new UpdateTaskRequest(), CALLER_EMAIL));
+                    () -> taskService.updateTask(PROJECT_ID, TASK_ID, new UpdateTaskRequest(), CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -301,7 +312,7 @@ class TaskServiceTest {
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.of(task));
 
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.updateTask(OTHER_PROJECT, TASK_ID, new UpdateTaskRequest(), CALLER_EMAIL));
+                    () -> taskService.updateTask(OTHER_PROJECT, TASK_ID, new UpdateTaskRequest(), CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -313,7 +324,7 @@ class TaskServiceTest {
             stubManagerCallerNotMember();
 
             assertThrows(AccessDeniedException.class,
-                () -> taskService.updateTask(PROJECT_ID, TASK_ID, new UpdateTaskRequest(), CALLER_EMAIL));
+                    () -> taskService.updateTask(PROJECT_ID, TASK_ID, new UpdateTaskRequest(), CALLER_EMAIL));
             verify(taskRepository, never()).save(any());
         }
 
@@ -327,7 +338,7 @@ class TaskServiceTest {
             UpdateTaskRequest req = new UpdateTaskRequest();
             req.setTitle("  ");
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.updateTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.updateTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -341,7 +352,7 @@ class TaskServiceTest {
             UpdateTaskRequest req = new UpdateTaskRequest();
             req.setTitle("y".repeat(256));
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.updateTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.updateTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -424,7 +435,7 @@ class TaskServiceTest {
             ChangeTaskStatusRequest req = new ChangeTaskStatusRequest();
             req.setStatus(null);
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -435,7 +446,7 @@ class TaskServiceTest {
             ChangeTaskStatusRequest req = new ChangeTaskStatusRequest();
             req.setStatus(TaskStatus.IN_PROGRESS);
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -447,7 +458,7 @@ class TaskServiceTest {
             ChangeTaskStatusRequest req = new ChangeTaskStatusRequest();
             req.setStatus(TaskStatus.IN_PROGRESS);
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.changeTaskStatus(OTHER_PROJECT, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.changeTaskStatus(OTHER_PROJECT, TASK_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -463,7 +474,7 @@ class TaskServiceTest {
             req.setStatus(TaskStatus.IN_PROGRESS);
 
             assertThrows(AccessDeniedException.class,
-                () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             verify(taskRepository, never()).save(any());
         }
 
@@ -478,7 +489,7 @@ class TaskServiceTest {
             ChangeTaskStatusRequest req = new ChangeTaskStatusRequest();
             req.setStatus(TaskStatus.DONE);
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -548,7 +559,7 @@ class TaskServiceTest {
             req.setStatus(TaskStatus.IN_PROGRESS);
 
             assertThrows(AccessDeniedException.class,
-                () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             verify(taskRepository, never()).save(any());
         }
 
@@ -565,7 +576,7 @@ class TaskServiceTest {
             req.setStatus(TaskStatus.IN_PROGRESS);
 
             assertThrows(AccessDeniedException.class,
-                () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.changeTaskStatus(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
         }
     }
 
@@ -582,7 +593,7 @@ class TaskServiceTest {
         void taskNotFound_throws() {
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.empty());
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.deleteTask(PROJECT_ID, TASK_ID, CALLER_EMAIL));
+                    () -> taskService.deleteTask(PROJECT_ID, TASK_ID, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -592,7 +603,7 @@ class TaskServiceTest {
             Task task = buildTask();
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.of(task));
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.deleteTask(OTHER_PROJECT, TASK_ID, CALLER_EMAIL));
+                    () -> taskService.deleteTask(OTHER_PROJECT, TASK_ID, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -604,7 +615,7 @@ class TaskServiceTest {
             stubManagerCallerNotMember();
 
             assertThrows(AccessDeniedException.class,
-                () -> taskService.deleteTask(PROJECT_ID, TASK_ID, CALLER_EMAIL));
+                    () -> taskService.deleteTask(PROJECT_ID, TASK_ID, CALLER_EMAIL));
             verify(taskRepository, never()).save(any());
         }
 
@@ -637,7 +648,7 @@ class TaskServiceTest {
             AssignTaskRequest req = new AssignTaskRequest();
             req.setAssigneeId(5L);
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -649,7 +660,7 @@ class TaskServiceTest {
             AssignTaskRequest req = new AssignTaskRequest();
             req.setAssigneeId(5L);
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.assignTask(OTHER_PROJECT, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.assignTask(OTHER_PROJECT, TASK_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -664,7 +675,7 @@ class TaskServiceTest {
             req.setAssigneeId(5L);
 
             assertThrows(AccessDeniedException.class,
-                () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             verify(taskRepository, never()).save(any());
         }
 
@@ -679,7 +690,7 @@ class TaskServiceTest {
             AssignTaskRequest req = new AssignTaskRequest();
             req.setAssigneeId(5L);
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
         }
 
@@ -715,7 +726,7 @@ class TaskServiceTest {
             req.setAssigneeId(5L);
 
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             assertNotNull(ex.getMessage());
             assertTrue(ex.getMessage().contains("not a member"));
             verify(taskRepository, never()).save(any());
@@ -748,7 +759,8 @@ class TaskServiceTest {
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.of(task));
             stubUserCallerAsMember();
             when(userRepository.existsById(CALLER_ID)).thenReturn(true);
-            // CALLER_ID is both the caller and the assignee, so the same stub covers both checks
+            // CALLER_ID is both the caller and the assignee, so the same stub covers both
+            // checks
             when(taskRepository.save(task)).thenReturn(task);
 
             AssignTaskRequest req = new AssignTaskRequest();
@@ -765,7 +777,8 @@ class TaskServiceTest {
             Task task = buildTask();
             task.setAssigneeId(null);
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.of(task));
-            // caller is NOT a member → verifyCallerProjectAccess fires before assignee checks
+            // caller is NOT a member → verifyCallerProjectAccess fires before assignee
+            // checks
             caller.setRole("USER");
             when(userRepository.findByEmail(CALLER_EMAIL)).thenReturn(Optional.of(caller));
             when(projectRepository.isUserProjectMember(PROJECT_ID, CALLER_ID)).thenReturn(false);
@@ -774,7 +787,7 @@ class TaskServiceTest {
             req.setAssigneeId(CALLER_ID);
 
             assertThrows(AccessDeniedException.class,
-                () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             verify(taskRepository, never()).save(any());
         }
 
@@ -790,7 +803,7 @@ class TaskServiceTest {
             req.setAssigneeId(999L); // not the caller
 
             assertThrows(AccessDeniedException.class,
-                () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             verify(taskRepository, never()).save(any());
         }
 
@@ -806,11 +819,10 @@ class TaskServiceTest {
             req.setAssigneeId(CALLER_ID);
 
             assertThrows(AccessDeniedException.class,
-                () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
+                    () -> taskService.assignTask(PROJECT_ID, TASK_ID, req, CALLER_EMAIL));
             verify(taskRepository, never()).save(any());
         }
     }
-
 
     @Nested
     @SuppressWarnings("unused")
@@ -822,11 +834,12 @@ class TaskServiceTest {
             CreateTaskRequest req = new CreateTaskRequest();
             req.setTitle("Test");
 
-            // Null email should throw IllegalStateException, but since it's checked before that,
+            // Null email should throw IllegalStateException, but since it's checked before
+            // that,
             // it will throw IllegalArgumentException from validateTitle on second call
             // Let's test it indirectly through an actual method
             assertThrows(Exception.class,
-                () -> taskService.listTasksByProject(PROJECT_ID, null));
+                    () -> taskService.listTasksByProject(PROJECT_ID, null));
         }
 
         @Test
@@ -836,7 +849,8 @@ class TaskServiceTest {
             stubAdminCaller();
             when(taskRepository.findByProjectIdAndDeletedFalse(PROJECT_ID)).thenReturn(List.of());
 
-            // This actually calls listTasksByProject(projectId, callerEmail, status) with status=null
+            // This actually calls listTasksByProject(projectId, callerEmail, status) with
+            // status=null
             // which requires a caller email
             List<TaskResponse> result = taskService.listTasksByProject(PROJECT_ID, CALLER_EMAIL);
 
@@ -871,7 +885,7 @@ class TaskServiceTest {
             req.setTitle("New title");
 
             assertThrows(IllegalStateException.class,
-                () -> taskService.updateTask(PROJECT_ID, TASK_ID, req));
+                    () -> taskService.updateTask(PROJECT_ID, TASK_ID, req));
         }
 
         @Test
@@ -1064,7 +1078,7 @@ class TaskServiceTest {
             when(taskRepository.findByIdAndDeletedFalse(TASK_ID)).thenReturn(Optional.of(buildTask()));
 
             assertThrows(IllegalStateException.class,
-                () -> taskService.deleteTask(PROJECT_ID, TASK_ID, null));
+                    () -> taskService.deleteTask(PROJECT_ID, TASK_ID, null));
         }
 
         @Test
