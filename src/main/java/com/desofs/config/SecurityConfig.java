@@ -39,6 +39,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**", "/actuator/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN") 
                 .requestMatchers(HttpMethod.PUT, "/api/admin/users/*/role").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/projects/*/tasks").hasAnyRole("ADMIN", "MANAGER")
                 // Project-level POST rules (create project = ADMIN only; member management = ADMIN/MANAGER)
