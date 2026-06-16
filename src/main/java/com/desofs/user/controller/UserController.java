@@ -5,6 +5,7 @@ import java.util.Map;
 import com.desofs.user.model.User;
 import com.desofs.user.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,5 +38,16 @@ public class UserController {
             }
             return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         }
+    }
+    @DeleteMapping("/{id}/sessions")
+    public ResponseEntity<?> terminateUserSessions(@PathVariable Long id) {
+        userService.terminateUserSessions(id);
+        return ResponseEntity.ok(Map.of("message", "All sessions terminated for user " + id));
+    }
+
+    @DeleteMapping("/sessions")
+    public ResponseEntity<?> terminateAllSessions() {
+        userService.terminateAllSessions();
+        return ResponseEntity.ok(Map.of("message", "All sessions terminated"));
     }
 }

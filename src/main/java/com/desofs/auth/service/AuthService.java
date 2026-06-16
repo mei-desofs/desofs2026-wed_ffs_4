@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.desofs.audit.model.AuditAction;
 import com.desofs.audit.service.AuditService;
+import com.desofs.security.ForbiddenPasswordWords;
 import com.desofs.security.JwtUtil;
 import com.desofs.user.model.User;
 import com.desofs.user.repository.UserRepository;
@@ -28,14 +29,15 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final AuditService auditService;
     private final ConcurrentMap<String, LoginState> loginStates = new ConcurrentHashMap<>();
-
+    private final ForbiddenPasswordWords forbiddenPasswords;
     @Autowired
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, RefreshTokenService refreshTokenService, AuditService auditService) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, RefreshTokenService refreshTokenService, AuditService auditService, ForbiddenPasswordWords forbiddenPasswords) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.refreshTokenService = refreshTokenService;
         this.auditService = auditService;
+        this.forbiddenPasswords = forbiddenPasswords;
     }
 
     public User register(String email, String password) {
@@ -96,12 +98,14 @@ public class AuthService {
     }
 
     private void validatePassword(String password) {
-        if (password == null || password.length() < MIN_PASSWORD_LENGTH) {
+        if (password == null || password.length() < MIN_PASSWORD_LENGTH)
             throw new IllegalArgumentException("Password must be at least 8 characters long");
-        }
-        if (!containsLetter(password) || !containsDigit(password)) {
+
+        if (!containsLetter(password) || !containsDigit(password))
             throw new IllegalArgumentException("Password must contain at least one letter and one digit");
-        }
+
+        if (forbiddenPasswords.contains(password))
+            throw new IllegalArgumentException("Password is too common. Please choose a more unique password");
     }
 
     private boolean containsLetter(String value) {

@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.desofs.project.dto.CreateProjectRequest;
+import com.desofs.project.dto.UpdateProjectRequest;
 import com.desofs.project.model.Project;
 import com.desofs.project.service.ProjectService;
 import com.desofs.user.model.User;
@@ -41,16 +43,17 @@ public class ProjectController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createProject(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> createProject(@RequestBody CreateProjectRequest request) {
         try {
             String email = getCurrentUserEmail();
-            User owner = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+            User owner = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
             if (!"ADMIN".equals(owner.getRole())) {
                 return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
             }
 
-            Project project = projectService.createProject(body.get("name"), body.get("description"), owner);
+            Project project = projectService.createProject(request.getName(), request.getDescription(), owner);
             return ResponseEntity.status(201).body(Map.of(
                     "id", project.getId(),
                     "name", project.getName(),
@@ -65,7 +68,8 @@ public class ProjectController {
     public ResponseEntity<?> listProjects(@RequestParam(required = false) String status) {
         try {
             String email = getCurrentUserEmail();
-            User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
             List<Project> projects = projectService.getUserProjects(user, status);
             return ResponseEntity.ok(projects);
         } catch (Exception ex) {
@@ -77,7 +81,8 @@ public class ProjectController {
     public ResponseEntity<?> getProject(@PathVariable Long id) {
         try {
             String email = getCurrentUserEmail();
-            User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
             Project project = projectService.getProjectById(id, user);
             return ResponseEntity.ok(Map.of(
                     "id", project.getId(),
@@ -85,34 +90,31 @@ public class ProjectController {
                     "description", project.getDescription()
             ));
         } catch (RuntimeException ex) {
-            if ("Project not found".equals(ex.getMessage())) {
+            if ("Project not found".equals(ex.getMessage()))
                 return ResponseEntity.status(404).body(Map.of("error", ex.getMessage()));
-            }
-            if ("Forbidden".equals(ex.getMessage())) {
+            if ("Forbidden".equals(ex.getMessage()))
                 return ResponseEntity.status(403).body(Map.of("error", ex.getMessage()));
-            }
             return ResponseEntity.status(400).body(Map.of("error", ex.getMessage()));
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateProject(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> updateProject(@PathVariable Long id, @RequestBody UpdateProjectRequest request) {
         try {
             String email = getCurrentUserEmail();
-            User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-            Project project = projectService.updateProject(id, user, body.get("name"), body.get("description"));
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            Project project = projectService.updateProject(id, user, request.getName(), request.getDescription());
             return ResponseEntity.ok(Map.of(
                     "id", project.getId(),
                     "name", project.getName(),
                     "description", project.getDescription()
             ));
         } catch (RuntimeException ex) {
-            if ("Project not found".equals(ex.getMessage())) {
+            if ("Project not found".equals(ex.getMessage()))
                 return ResponseEntity.status(404).body(Map.of("error", ex.getMessage()));
-            }
-            if ("Forbidden".equals(ex.getMessage())) {
+            if ("Forbidden".equals(ex.getMessage()))
                 return ResponseEntity.status(403).body(Map.of("error", ex.getMessage()));
-            }
             return ResponseEntity.status(400).body(Map.of("error", ex.getMessage()));
         }
     }
@@ -121,16 +123,15 @@ public class ProjectController {
     public ResponseEntity<?> deleteProject(@PathVariable Long id) {
         try {
             String email = getCurrentUserEmail();
-            User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
             projectService.deleteProject(id, user);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException ex) {
-            if ("Project not found".equals(ex.getMessage())) {
+            if ("Project not found".equals(ex.getMessage()))
                 return ResponseEntity.status(404).body(Map.of("error", ex.getMessage()));
-            }
-            if ("Forbidden".equals(ex.getMessage())) {
+            if ("Forbidden".equals(ex.getMessage()))
                 return ResponseEntity.status(403).body(Map.of("error", ex.getMessage()));
-            }
             return ResponseEntity.status(400).body(Map.of("error", ex.getMessage()));
         }
     }

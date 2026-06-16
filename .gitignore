@@ -60,3 +60,5 @@ out/
 
 # Ignore user uploaded files
 /uploads
+
+.metals/
