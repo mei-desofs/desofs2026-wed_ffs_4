@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
       - name: Generate ASVS mapping (specs to tests)
         run: |
           echo "# ASVS Mapping" > asvs-mapping.md
@@ -18,8 +19,9 @@ jobs:
           grep -r 'ASVS' Deliverables/Phase1/ >> asvs-mapping.md || true
           echo "\n## Test Classes" >> asvs-mapping.md
           find src/test -name '*.java' >> asvs-mapping.md
+          
       - name: Upload ASVS mapping
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: asvs-mapping
           path: asvs-mapping.md
