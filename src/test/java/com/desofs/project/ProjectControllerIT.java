@@ -1,21 +1,27 @@
 package com.desofs.project;
 
-import java.util.List;
-import java.util.Optional;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.desofs.project.model.Project;
@@ -23,13 +29,6 @@ import com.desofs.project.service.ProjectMemberService;
 import com.desofs.project.service.ProjectService;
 import com.desofs.user.model.User;
 import com.desofs.user.repository.UserRepository;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -39,13 +38,13 @@ class ProjectControllerIT {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private ProjectService projectService;
 
-    @MockBean
+    @MockitoBean
     private ProjectMemberService projectMemberService;
 
-    @MockBean
+    @MockitoBean
     private UserRepository userRepository;
 
     @Test
@@ -63,8 +62,8 @@ class ProjectControllerIT {
         when(projectService.createProject("Project 1", "Description", owner)).thenReturn(project);
 
         mockMvc.perform(post("/api/projects")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Project 1\",\"description\":\"Description\"}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Project 1\",\"description\":\"Description\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(10L))
                 .andExpect(jsonPath("$.name").value("Project 1"))
@@ -75,8 +74,8 @@ class ProjectControllerIT {
     @WithMockUser(username = "user@example.com", roles = { "USER" })
     void createProjectShouldRejectUserRole() throws Exception {
         mockMvc.perform(post("/api/projects")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Project 1\",\"description\":\"Description\"}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Project 1\",\"description\":\"Description\"}"))
                 .andExpect(status().isForbidden());
     }
 
@@ -182,8 +181,8 @@ class ProjectControllerIT {
         when(projectService.updateProject(10L, admin, "Updated", "Updated desc")).thenReturn(updated);
 
         mockMvc.perform(put("/api/projects/10")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Updated\",\"description\":\"Updated desc\"}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Updated\",\"description\":\"Updated desc\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(10L))
                 .andExpect(jsonPath("$.name").value("Updated"))
@@ -205,8 +204,8 @@ class ProjectControllerIT {
         when(projectService.updateProject(11L, manager, "Updated", "Updated desc")).thenReturn(updated);
 
         mockMvc.perform(put("/api/projects/11")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Updated\",\"description\":\"Updated desc\"}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Updated\",\"description\":\"Updated desc\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(11L));
     }
@@ -215,8 +214,8 @@ class ProjectControllerIT {
     @WithMockUser(username = "user@example.com", roles = { "USER" })
     void updateProjectShouldRejectUserRole() throws Exception {
         mockMvc.perform(put("/api/projects/12")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Updated\",\"description\":\"Updated desc\"}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Updated\",\"description\":\"Updated desc\"}"))
                 .andExpect(status().isForbidden());
     }
 
@@ -241,8 +240,8 @@ class ProjectControllerIT {
         when(projectMemberService.addMember(50L, admin, "user@example.com")).thenReturn(project);
 
         mockMvc.perform(post("/api/projects/50/members")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"user@example.com\"}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"user@example.com\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.projectId").value(50L));
     }
@@ -251,8 +250,8 @@ class ProjectControllerIT {
     @WithMockUser(username = "user@example.com", roles = { "USER" })
     void addMemberShouldRejectUserRole() throws Exception {
         mockMvc.perform(post("/api/projects/50/members")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"user@example.com\"}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"user@example.com\"}"))
                 .andExpect(status().isForbidden());
     }
 
@@ -271,8 +270,8 @@ class ProjectControllerIT {
         when(projectMemberService.removeMember(60L, manager, 99L)).thenReturn(project);
 
         mockMvc.perform(delete("/api/projects/60/members/99")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.projectId").value(60L));
     }
