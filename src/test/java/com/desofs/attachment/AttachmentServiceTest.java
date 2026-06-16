@@ -21,6 +21,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.access.AccessDeniedException;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -113,6 +117,21 @@ class AttachmentServiceTest {
     }
 
     @Test
+    void store_whenImagePixelCountExceedsLimit_rejectsFile() throws Exception {
+        properties.setMaxImagePixels(3);
+        stubAccess(user, task, project);
+        when(attachmentRepository.countByUploadedByAndCreatedAtAfter(eq(USER_ID), any())).thenReturn(0L);
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "oversized.png", "image/png", pngBytes(2, 2));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> service.store(TASK_ID, file, USER_EMAIL));
+
+        assertEquals("Image dimensions exceed the maximum pixel count of 3", ex.getMessage());
+        verify(attachmentRepository, never()).save(any());
+    }
+
+    @Test
     void store_whenUploadLimitReached_rejectsFile() {
         properties.setMaxUploadsPerWindow(1);
         stubAccess(user, task, project);
@@ -192,6 +211,13 @@ class AttachmentServiceTest {
         Attachment attachment = new Attachment(originalName, storedName, TASK_ID, uploadedBy, 4L, "application/pdf");
         attachment.setId(1L);
         return attachment;
+    }
+
+    private byte[] pngBytes(int width, int height) throws IOException {
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", output);
+        return output.toByteArray();
     }
 
     private User user(Long id, String email, String role) {

@@ -61,4 +61,6 @@ out/
 # Ignore user uploaded files
 /uploads
 
+# VSCode extensions
 .metals/
+.bloop/

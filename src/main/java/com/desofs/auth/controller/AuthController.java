@@ -87,8 +87,13 @@ public class AuthController {
         String token = authHeader.substring(7);
         try {
             Jws<Claims> claims = jwtUtil.validate(token);
+            String userEmail = claims.getBody().getSubject();
+            if (userEmail == null || userEmail.isBlank()) {
+                throw new JwtException("Missing token subject");
+            }
             tokenBlacklistService.blacklist(token, claims.getBody().getExpiration().toInstant());
-            auditService.record(claims.getBody().getSubject(), AuditAction.LOGOUT, "auth", claims.getBody().getSubject(), true, "Logged out");
+            authService.revokeRefreshTokensForUser(userEmail);
+            auditService.record(userEmail, AuditAction.LOGOUT, "auth", userEmail, true, "Logged out");
             return ResponseEntity.ok(Map.of("message", "Logged out"));
         } catch (JwtException ex) {
             auditService.record("unknown", AuditAction.LOGOUT, "auth", "-", false, ex.getMessage());

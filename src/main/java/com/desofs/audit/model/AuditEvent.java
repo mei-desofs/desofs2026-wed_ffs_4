@@ -1,6 +1,6 @@
 package com.desofs.audit.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,7 +38,7 @@ public class AuditEvent {
     private String details;
 
     @Column(nullable = false, updatable = false)
-    private LocalDateTime occurredAt = LocalDateTime.now();
+    private Instant occurredAt = Instant.now();
 
     public AuditEvent() {}
 
@@ -58,5 +58,5 @@ public class AuditEvent {
     public String getResourceId() { return resourceId; }
     public boolean isSuccess() { return success; }
     public String getDetails() { return details; }
-    public LocalDateTime getOccurredAt() { return occurredAt; }
+    public Instant getOccurredAt() { return occurredAt; }
 }

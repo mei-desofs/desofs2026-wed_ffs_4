@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -42,6 +43,17 @@ class AuditServiceTest {
                     "Project created");
 
             verify(auditEventRepository).save(any(AuditEvent.class));
+        }
+
+        @Test
+        @DisplayName("saves audit event with UTC instant timestamp")
+        void record_setsInstantTimestamp() {
+            auditService.record("user@example.com", AuditAction.PROJECT_CREATE, "project", "123", true,
+                    "Project created");
+
+            ArgumentCaptor<AuditEvent> captor = ArgumentCaptor.forClass(AuditEvent.class);
+            verify(auditEventRepository).save(captor.capture());
+            org.junit.jupiter.api.Assertions.assertNotNull(captor.getValue().getOccurredAt());
         }
 
         @Test
