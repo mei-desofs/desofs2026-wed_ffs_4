@@ -98,6 +98,13 @@ public class AuthService {
         return Map.of("token", jwt, "refreshToken", newRefreshToken);
     }
 
+    public void revokeRefreshTokensForUser(String userEmail) {
+        if (userEmail == null || userEmail.isBlank()) {
+            throw new IllegalArgumentException("User email is required");
+        }
+        refreshTokenService.deleteByUserEmail(userEmail);
+    }
+
     private void recordAudit(String actor, AuditAction action, String resourceType, String resourceId, boolean success, String details) {
         if (auditService != null) {
             auditService.record(actor, action, resourceType, resourceId, success, details);

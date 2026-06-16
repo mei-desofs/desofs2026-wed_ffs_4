@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.desofs.auth.service.AuthService;
+import com.desofs.auth.service.RefreshTokenService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,6 +34,8 @@ class AuthServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private ForbiddenPasswordWords forbiddenPasswords;
+    @Mock
+    private RefreshTokenService refreshTokenService;
 
     @InjectMocks
     private AuthService authService;
@@ -74,6 +77,13 @@ class AuthServiceTest {
 
         assertEquals("Invalid credentials", ex.getMessage());
         verify(passwordEncoder).matches(anyString(), anyString());
+    }
+
+    @Test
+    void revokeRefreshTokensForUserShouldDeleteStoredRefreshToken() {
+        authService.revokeRefreshTokensForUser("user@example.com");
+
+        verify(refreshTokenService).deleteByUserEmail("user@example.com");
     }
 
 }
