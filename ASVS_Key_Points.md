@@ -1,29 +1,5 @@
 # ASVS - missing points
 
-## Group 2 (22 itens)
-- V2.4.1 [L2] [In Progress] - Anti-automation controls are in place to protect against excessive calls to application functions that could lead to data exfiltration, garbage-data creation, quota exhaustion, rate-limit breaches, denial-of-service, or overuse of costly resources.
-- V5.2.6 [L3] [Not Started] - The application rejects uploaded images with a pixel size larger than the maximum allowed, to prevent pixel flood attacks.
-- V6.2.1 [L1] [Not Started] - User set passwords are at least 8 characters in length although a minimum of 15 characters is strongly recommended.
-- V6.2.5 [L1] [Not Started] - Passwords of any composition can be used, without rules limiting the type of characters permitted. There must be no requirement for a minimum number of upper or lower case characters, numbers, or special characters.
-- V6.3.2 [L1] [Not Started] - Default user accounts (e.g., "root", "admin", or "sa") are not present in the application or are disabled.
-- V6.3.8 [L3] [Not Started] - Valid users cannot be deduced from failed authentication challenges, such as by basing on error messages, HTTP response codes, or different response times. Registration and forgot password functionality must also have this protection.
-- V7.4.1 [L1] [Not Started] - When session termination is triggered (such as logout or expiration), the application disallows any further use of the session. For reference tokens or stateful sessions, this means invalidating the session data at the application backend. Applications using self-contained tokens will need a solution such as maintaining a list of terminated tokens, disallowing tokens produced before a per-user date and time or rotating a per-user signing key.
-- V7.5.1 [L2] [Not Started] - The application requires full re-authentication before allowing modifications to sensitive account attributes which may affect authentication such as email address, phone number, MFA configuration, or other information used in account recovery.
-- V11.1.2 [L2] [In Progress] - A cryptographic inventory is performed, maintained, regularly updated, and includes all cryptographic keys, algorithms, and certificates used by the application. It must also document where keys can and cannot be used in the system, and the types of data that can and cannot be protected using the keys.
-- V11.3.2 [L1] [In Progress] - Only approved ciphers and modes such as AES with GCM are used.
-- V12.1.1 [L1] [Not Started] - Only the latest recommended versions of the TLS protocol are enabled, such as TLS 1.2 and TLS 1.3. The latest version of the TLS protocol must be the preferred option.
-- V12.2.2 [L1] [Not Started] - External facing services use publicly trusted TLS certificates.
-- V12.3.4 [L2] [Not Started] - TLS connections between internal services use trusted certificates. Where internally generated or self-signed certificates are used, the consuming service must be configured to only trust specific internal CAs and specific self-signed certificates.
-- V15.1.1 [L1] [Not Started] - Application documentation defines risk based remediation time frames for 3rd party component versions with vulnerabilities and for updating libraries in general, to minimize the risk from these components.
-- V15.1.5 [L3] [Not Started] - Application documentation highlights parts of the application where "dangerous functionality" is being used.
-- V15.2.4 [L3] [In Progress] - Third-party components and all of their transitive dependencies are included from the expected repository, whether internally owned or an external source, and that there is no risk of a dependency confusion attack.
-- V15.3.4 [L2] [Not Started] - All proxying and middleware components transfer the user's original IP address correctly using trusted data fields that cannot be manipulated by the end user, and the application and web server use this correct value for logging and security decisions such as rate limiting, taking into account that even the original IP address may not be reliable due to dynamic IPs, VPNs, or corporate firewalls.
-- V15.4.3 [L3] [Not Started] - Locks are used consistently to avoid threads getting stuck, whether by waiting on each other or retrying endlessly, and that locking logic stays within the code responsible for managing the resource to ensure locks cannot be inadvertently or maliciously modified by external classes or code.
-- V16.2.2 [L2] [Not Started] - Time sources for all logging components are synchronized, and that timestamps in security event metadata use UTC or include an explicit time zone offset. UTC is recommended to ensure consistency across distributed systems and to prevent confusion during daylight saving time transitions.
-- V16.3.1 [L2] [Not Started] - All authentication operations are logged, including successful and unsuccessful attempts. Additional metadata, such as the type of authentication or factors used, should also be collected.
-- V16.4.1 [L2] [Not Started] - All logging components appropriately encode data to prevent log injection.
-- V16.5.2 [L2] [Not Started] - The application continues to operate securely when external resource access fails, for example, by using patterns such as circuit breakers or graceful degradation.
-
 ## Group 3 (22 itens)
 - V4.1.2 [L2] [In Progress] - Only user-facing endpoints (intended for manual web-browser access) automatically redirect from HTTP to HTTPS, while other services or endpoints do not implement transparent redirects. This is to avoid a situation where a client is erroneously sending unencrypted HTTP requests, but since the requests are being automatically redirected to HTTPS, the leakage of sensitive data goes undiscovered.
 - V5.4.2 [L2] [In Progress] - File names served (e.g., in HTTP response header fields or email attachments) are encoded or sanitized (e.g., following RFC 6266) to preserve document structure and prevent injection attacks.
