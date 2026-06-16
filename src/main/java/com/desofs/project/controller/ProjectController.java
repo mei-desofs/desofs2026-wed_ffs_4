@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.desofs.project.dto.CreateProjectRequest;
+import com.desofs.project.dto.ProjectResponse;
 import com.desofs.project.dto.UpdateProjectRequest;
 import com.desofs.project.model.Project;
 import com.desofs.project.service.ProjectService;
@@ -70,13 +71,15 @@ public class ProjectController {
             String email = getCurrentUserEmail();
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("User not found"));
-            List<Project> projects = projectService.getUserProjects(user, status);
+            List<ProjectResponse> projects = projectService.getUserProjects(user, status)
+                    .stream()
+                    .map(ProjectResponse::from)
+                    .toList();
             return ResponseEntity.ok(projects);
         } catch (Exception ex) {
             return ResponseEntity.status(400).body(Map.of("error", ex.getMessage()));
         }
     }
-
     @GetMapping("/{id}")
     public ResponseEntity<?> getProject(@PathVariable Long id) {
         try {
