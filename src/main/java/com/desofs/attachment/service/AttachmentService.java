@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -36,6 +37,10 @@ import com.desofs.task.repository.TaskRepository;
 import com.desofs.user.model.User;
 import com.desofs.user.repository.UserRepository;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+
 @Service
 public class AttachmentService {
     private final AttachmentRepository attachmentRepository;
@@ -47,6 +52,7 @@ public class AttachmentService {
     private final Path storageRoot;
 
     private static final Map<String, Set<String>> MIME_TYPES_BY_EXTENSION = allowedMimeTypes();
+    private static final Set<String> IMAGE_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif");
 
     @Autowired
     public AttachmentService(AttachmentRepository attachmentRepository,
@@ -177,7 +183,40 @@ public class AttachmentService {
         if (allowedMimeTypes == null || !allowedMimeTypes.contains(mimeType))
             throw new IllegalArgumentException("File MIME type does not match the allowed type for ." + extension);
 
+        validateImagePixelCount(file, extension);
+
         return new ValidatedFile(originalName, extension, mimeType);
+    }
+
+    private void validateImagePixelCount(MultipartFile file, String extension) {
+        long maxImagePixels = properties.getMaxImagePixels();
+        if (!IMAGE_EXTENSIONS.contains(extension) || maxImagePixels <= 0)
+            return;
+
+        try (ImageInputStream imageStream = ImageIO.createImageInputStream(file.getInputStream())) {
+            if (imageStream == null)
+                throw new IllegalArgumentException("Image file is invalid");
+
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(imageStream);
+            if (!readers.hasNext())
+                throw new IllegalArgumentException("Image file is invalid");
+
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(imageStream, true, true);
+                int width = reader.getWidth(0);
+                int height = reader.getHeight(0);
+                long pixelCount = Math.multiplyExact((long) width, (long) height);
+                if (pixelCount > maxImagePixels)
+                    throw new IllegalArgumentException("Image dimensions exceed the maximum pixel count of " + maxImagePixels);
+            } finally {
+                reader.dispose();
+            }
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException("Image dimensions exceed the maximum pixel count of " + maxImagePixels);
+        } catch (IOException ex) {
+            throw new IllegalArgumentException("Image file is invalid", ex);
+        }
     }
 
     private String getSafeOriginalName(MultipartFile file) {

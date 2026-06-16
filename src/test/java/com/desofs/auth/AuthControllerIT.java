@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,11 +109,15 @@ class AuthControllerIT {
         when(jwtUtil.validate("jwt-token")).thenReturn(jws);
         when(jws.getBody()).thenReturn(claims);
         when(claims.getExpiration()).thenReturn(exp);
+        when(claims.getSubject()).thenReturn("user@example.com");
         doNothing().when(tokenBlacklistService).blacklist(eq("jwt-token"), any());
 
         mockMvc.perform(post("/auth/logout")
                         .header("Authorization", "Bearer jwt-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Logged out"));
+
+        verify(tokenBlacklistService).blacklist(eq("jwt-token"), any());
+        verify(authService).revokeRefreshTokensForUser("user@example.com");
     }
 }

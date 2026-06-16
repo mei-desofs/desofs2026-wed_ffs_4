@@ -7,9 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.desofs.auth.service.AuthService;
+import com.desofs.auth.service.RefreshTokenService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.never;
@@ -32,6 +34,8 @@ class AuthServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private ForbiddenPasswordWords forbiddenPasswords;
+    @Mock
+    private RefreshTokenService refreshTokenService;
 
     @InjectMocks
     private AuthService authService;
@@ -61,6 +65,25 @@ class AuthServiceTest {
         assertEquals("Email already in use", ex.getMessage());
 
         verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void loginShouldVerifyPasswordHashWhenUserDoesNotExist() {
+        when(userRepository.findByEmail("missing@example.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> authService.login("missing@example.com", "password123"));
+
+        assertEquals("Invalid credentials", ex.getMessage());
+        verify(passwordEncoder).matches(anyString(), anyString());
+    }
+
+    @Test
+    void revokeRefreshTokensForUserShouldDeleteStoredRefreshToken() {
+        authService.revokeRefreshTokensForUser("user@example.com");
+
+        verify(refreshTokenService).deleteByUserEmail("user@example.com");
     }
 
 }

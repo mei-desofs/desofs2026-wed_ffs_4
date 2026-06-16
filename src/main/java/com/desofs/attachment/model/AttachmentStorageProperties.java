@@ -16,6 +16,7 @@ public class AttachmentStorageProperties {
             "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "jpg", "jpeg", "png", "gif");
     private int maxUploadsPerWindow = 10;
     private Duration uploadWindow = Duration.ofHours(1);
+    private long maxImagePixels = 40_000_000L;
 
     public String getStorageDir() {
         return storageDir;
@@ -55,5 +56,13 @@ public class AttachmentStorageProperties {
 
     public void setUploadWindow(Duration uploadWindow) {
         this.uploadWindow = uploadWindow;
+    }
+
+    public long getMaxImagePixels() {
+        return maxImagePixels;
+    }
+
+    public void setMaxImagePixels(long maxImagePixels) {
+        this.maxImagePixels = maxImagePixels;
     }
 }
