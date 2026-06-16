@@ -10,6 +10,7 @@ import com.desofs.auth.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.never;
@@ -61,6 +62,18 @@ class AuthServiceTest {
         assertEquals("Email already in use", ex.getMessage());
 
         verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void loginShouldVerifyPasswordHashWhenUserDoesNotExist() {
+        when(userRepository.findByEmail("missing@example.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> authService.login("missing@example.com", "password123"));
+
+        assertEquals("Invalid credentials", ex.getMessage());
+        verify(passwordEncoder).matches(anyString(), anyString());
     }
 
 }

@@ -24,6 +24,8 @@ public class AuthService {
     private static final int MIN_PASSWORD_LENGTH = 8;
     private static final int MAX_LOGIN_FAILURES = 5;
     private static final java.time.Duration LOCKOUT_DURATION = java.time.Duration.ofMinutes(15);
+    private static final String TIMING_ATTACK_MITIGATION_PASSWORD_HASH =
+            "$2a$10$UeF7nKIRzjWpVtGjXqyVLOc0c3fZkgJatY3rh6e97yQgxEbwz/DF.";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -64,10 +66,13 @@ public class AuthService {
             throw new AccountLockedException("Too many failed login attempts. Try again later");
         }
 
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
-        if (!passwordEncoder.matches(password, user.getPassword())) {
+        User user = userRepository.findByEmail(email).orElse(null);
+        String passwordHash = user == null ? TIMING_ATTACK_MITIGATION_PASSWORD_HASH : user.getPassword();
+        boolean passwordMatches = passwordEncoder.matches(password, passwordHash);
+
+        if (user == null || !passwordMatches) {
             state.registerFailure();
-            recordAudit(email, AuditAction.LOGIN_FAILURE, "auth", email, false, "Invalid password");
+            recordAudit(email, AuditAction.LOGIN_FAILURE, "auth", email, false, "Invalid credentials");
             if (state.isLocked()) {
                 recordAudit(email, AuditAction.LOCKOUT, "auth", email, false, "Account temporarily locked");
                 throw new AccountLockedException("Too many failed login attempts. Try again later");
