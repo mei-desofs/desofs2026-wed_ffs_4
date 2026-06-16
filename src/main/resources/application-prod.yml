@@ -16,9 +16,17 @@ server:
   port: 8443
   ssl:
     enabled: true
+    enabled-protocols: TLSv1.3,TLSv1.2
     key-store: classpath:keystore.p12
     key-store-password: ${SSL_KEYSTORE_PASSWORD}
     key-store-type: PKCS12
+    ciphers:
+      - TLS_AES_256_GCM_SHA384
+      - TLS_AES_128_GCM_SHA256
+      - TLS_CHACHA20_POLY1305_SHA256
+      - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+      - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
 
 jwt:
   secret: change_this_to_a_long_random_secret_for_dev_purposes_only
