@@ -14,6 +14,11 @@ spring:
 
 server:
   port: 8080
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-exception: false
+    include-binding-errors: never
 
 jwt:
   secret: change_this_to_a_long_random_secret_for_dev_purposes_only

@@ -1,6 +1,6 @@
 package com.desofs.task.dto;
 
-import com.desofs.task.TaskStatus;
+import com.desofs.task.model.TaskStatus;
 
 /**
  * Request body for FR-13: Change task status.

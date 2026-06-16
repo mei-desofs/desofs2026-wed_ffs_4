@@ -1,8 +1,8 @@
 package com.desofs.task.dto;
 
-import com.desofs.task.Task;
-import com.desofs.task.TaskPriority;
-import com.desofs.task.TaskStatus;
+import com.desofs.task.model.Task;
+import com.desofs.task.model.TaskPriority;
+import com.desofs.task.model.TaskStatus;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

@@ -8,15 +8,16 @@
     <Match>
         <Bug pattern="EI_EXPOSE_REP2"/>
         <Or>
-            <Class name="com.desofs.attachment.AttachmentController"/>
-            <Class name="com.desofs.attachment.AttachmentService"/>
-            <Class name="com.desofs.auth.AuthService"/>
-            <Class name="com.desofs.auth.RefreshTokenService"/>
-            <Class name="com.desofs.comment.CommentController"/>
+            <Class name="com.desofs.attachment.controller.AttachmentController"/>
+            <Class name="com.desofs.attachment.service.AttachmentService"/>
+            <Class name="com.desofs.auth.service.AuthService"/>
+            <Class name="com.desofs.auth.service.RefreshTokenService"/>
+            <Class name="com.desofs.comment.controller.CommentController"/>
             <Class name="com.desofs.config.SecurityConfig"/>
             <Class name="com.desofs.project.controller.ProjectController"/>
             <Class name="com.desofs.project.controller.ProjectMemberController"/>
-            <Class name="com.desofs.task.TaskController"/>
+            <Class name="com.desofs.task.controller.TaskController"/>
+            <Class name="com.desofs.security.TokenBlacklistService"/>
         </Or>
     </Match>
 
@@ -26,11 +27,11 @@
     -->
     <Match>
         <Bug pattern="EI_EXPOSE_REP"/>
-        <Class name="com.desofs.attachment.AttachmentDownload"/>
+        <Class name="com.desofs.attachment.model.AttachmentDownload"/>
     </Match>
     <Match>
         <Bug pattern="EI_EXPOSE_REP2"/>
-        <Class name="com.desofs.attachment.AttachmentDownload"/>
+        <Class name="com.desofs.attachment.model.AttachmentDownload"/>
     </Match>
 
     <!--
@@ -58,7 +59,7 @@
     -->
     <Match>
         <Bug pattern="CT_CONSTRUCTOR_THROW"/>
-        <Class name="com.desofs.comment.Comment"/>
+        <Class name="com.desofs.comment.model.Comment"/>
     </Match>
     <Match>
         <Bug pattern="CT_CONSTRUCTOR_THROW"/>

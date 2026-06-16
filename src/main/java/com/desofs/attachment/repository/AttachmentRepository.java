@@ -1,0 +1,15 @@
+package com.desofs.attachment.repository;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import com.desofs.attachment.model.Attachment;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
+    List<Attachment> findByTaskIdAndDeletedAtIsNullOrderByCreatedAtDesc(UUID taskId);
+    Optional<Attachment> findByIdAndDeletedAtIsNull(Long id);
+    long countByUploadedByAndCreatedAtAfter(Long uploadedBy, Instant createdAt);
+}

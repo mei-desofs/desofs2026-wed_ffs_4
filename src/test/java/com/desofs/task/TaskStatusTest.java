@@ -1,5 +1,6 @@
 package com.desofs.task;
 
+import com.desofs.task.model.TaskStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
