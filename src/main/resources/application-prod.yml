@@ -45,3 +45,4 @@ app:
       - gif
     max-uploads-per-window: 10
     upload-window: 1h
+    max-image-pixels: 40000000
