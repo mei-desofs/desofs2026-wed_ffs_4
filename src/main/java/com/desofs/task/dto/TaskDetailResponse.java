@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.desofs.task.Task;
+import com.desofs.task.model.Task;
 
 public class TaskDetailResponse {
     private UUID id;

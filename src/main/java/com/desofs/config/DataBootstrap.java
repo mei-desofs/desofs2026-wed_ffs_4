@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 
 import com.desofs.project.model.Project;
 import com.desofs.project.repository.ProjectRepository;
-import com.desofs.user.User;
-import com.desofs.user.UserRepository;
+import com.desofs.user.model.User;
+import com.desofs.user.repository.UserRepository;
 
 @Component
 @Profile("!test")

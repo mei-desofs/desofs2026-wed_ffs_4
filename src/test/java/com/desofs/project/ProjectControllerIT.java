@@ -21,8 +21,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.desofs.project.model.Project;
 import com.desofs.project.service.ProjectMemberService;
 import com.desofs.project.service.ProjectService;
-import com.desofs.user.User;
-import com.desofs.user.UserRepository;
+import com.desofs.user.model.User;
+import com.desofs.user.repository.UserRepository;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

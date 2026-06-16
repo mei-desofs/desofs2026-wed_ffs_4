@@ -1,10 +1,14 @@
 package com.desofs.task;
 
+import com.desofs.task.controller.TaskController;
 import com.desofs.task.dto.AssignTaskRequest;
 import com.desofs.task.dto.ChangeTaskStatusRequest;
 import com.desofs.task.dto.CreateTaskRequest;
 import com.desofs.task.dto.TaskResponse;
 import com.desofs.task.dto.UpdateTaskRequest;
+import com.desofs.task.model.Task;
+import com.desofs.task.model.TaskStatus;
+import com.desofs.task.service.TaskService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

@@ -2,10 +2,12 @@ package com.desofs.comment;
 
 import com.desofs.comment.dto.CreateCommentRequest;
 import com.desofs.comment.dto.UpdateCommentRequest;
-import com.desofs.task.Task;
-import com.desofs.task.TaskRepository;
-import com.desofs.user.User;
-import com.desofs.user.UserRepository;
+import com.desofs.comment.model.Comment;
+import com.desofs.comment.repository.CommentRepository;
+import com.desofs.task.model.Task;
+import com.desofs.task.repository.TaskRepository;
+import com.desofs.user.model.User;
+import com.desofs.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +35,7 @@ class CommentControllerIntegrationTest {
 
     @Autowired private MockMvc            mockMvc;
     @Autowired private ObjectMapper       objectMapper;
-    @Autowired private CommentRepository  commentRepository;
+    @Autowired private CommentRepository commentRepository;
     @Autowired private UserRepository     userRepository;
     @Autowired private TaskRepository     taskRepository;   // needed to satisfy resolveTask()
 

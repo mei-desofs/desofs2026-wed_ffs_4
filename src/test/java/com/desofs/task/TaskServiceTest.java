@@ -7,8 +7,12 @@ import com.desofs.task.dto.CreateTaskRequest;
 import com.desofs.task.dto.TaskDetailResponse;
 import com.desofs.task.dto.TaskResponse;
 import com.desofs.task.dto.UpdateTaskRequest;
-import com.desofs.user.User;
-import com.desofs.user.UserRepository;
+import com.desofs.task.model.Task;
+import com.desofs.task.model.TaskStatus;
+import com.desofs.task.repository.TaskRepository;
+import com.desofs.task.service.TaskService;
+import com.desofs.user.model.User;
+import com.desofs.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -39,7 +43,7 @@ import static org.mockito.Mockito.*;
 @SuppressWarnings("unused")
 class TaskServiceTest {
 
-    @Mock private TaskRepository    taskRepository;
+    @Mock private TaskRepository taskRepository;
     @Mock private ProjectRepository projectRepository;
     @Mock private UserRepository    userRepository;
 

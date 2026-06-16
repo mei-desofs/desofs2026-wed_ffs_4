@@ -7,6 +7,9 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
+import com.desofs.user.model.User;
+import com.desofs.user.repository.UserRepository;
+import com.desofs.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
