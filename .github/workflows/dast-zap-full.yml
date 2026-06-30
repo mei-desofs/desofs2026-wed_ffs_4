@@ -1,9 +1,13 @@
 name: DAST (OWASP ZAP Full)
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 3 * * *'
+  push:
+    branches:
+      - main
+# on:
+#   workflow_dispatch:
+#   schedule:
+#     - cron: '0 3 * * *'
 
 jobs:
   dast:
